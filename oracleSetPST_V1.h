@@ -108,7 +108,7 @@ void oracleSetPST_V1(int board[8][8],unsigned long long int key){
 				if (piece== 4){ pieceSquareTable[6+piece][i][j] = pieceSquareTableBishop[7-j][i]/5;}
 				if (piece== 5){ pieceSquareTable[6+piece][i][j] = pieceSquareTableQueen[7-j][i]/5;}
 				
-				/*
+				
 				if (globalNrWhiteQueens+globalNrBlackQueens==0 && globalPieceScoreWhite-globalNrWhitePawns <13 && globalPieceScoreBlack-globalNrBlackPawns <13){
 					if (piece==-6){ pieceSquareTable[6+piece][i][j] =-pieceSquareTableKingEndgame[j][i]/5;}
 					if (piece== 6){ pieceSquareTable[6+piece][i][j] = pieceSquareTableKingEndgame[7-j][i]/5;}
@@ -116,9 +116,9 @@ void oracleSetPST_V1(int board[8][8],unsigned long long int key){
 					if (piece==-6){ pieceSquareTable[6+piece][i][j] =-pieceSquareTableKingMiddlegame[j][i]/5;}
 					if (piece== 6){ pieceSquareTable[6+piece][i][j] = pieceSquareTableKingMiddlegame[7-j][i]/5;}
 				}
-				*/
 				
-				/// try for PP11:
+				
+				/*
 				if (globalNrWhiteQueens+globalNrBlackQueens==0 && globalPieceScoreWhite-globalNrWhitePawns <13 && globalPieceScoreBlack-globalNrBlackPawns <13){
 					if (piece==-6){ pieceSquareTable[6+piece][i][j] =-pieceSquareTableKingEndgame[j][i];}
 					if (piece== 6){ pieceSquareTable[6+piece][i][j] = pieceSquareTableKingEndgame[7-j][i];}
@@ -126,7 +126,7 @@ void oracleSetPST_V1(int board[8][8],unsigned long long int key){
 					if (piece==-6){ pieceSquareTable[6+piece][i][j] =-pieceSquareTableKingMiddlegame[j][i];}
 					if (piece== 6){ pieceSquareTable[6+piece][i][j] = pieceSquareTableKingMiddlegame[7-j][i];}
 				}
-				
+				*/
 				
 			}
 		}
