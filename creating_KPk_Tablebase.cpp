@@ -10,6 +10,7 @@
 
 using namespace std;
 
+#include "globalVariables.h"
 #include "plotBoard.h"
 #include "isKingInCheck.h"
 #include "assignMakeMove.h"
@@ -226,7 +227,7 @@ int main(){
 			}
 		}
 		if (!isKingInCheck(board,-1)){
-			assignMoveList(board,-1,moveList,true);
+			assignMoveList(board,0,moveList,true);
 			if (moveList[0]==0){
 				continue;
 			}
@@ -272,7 +273,8 @@ int main(){
 			if (turn==1 && isKingInCheck(board,-1)){continue;}
 			
 			// generating the moveList and check for stalemate
-			assignMoveList(board,turn,moveList,true);
+			if (turn==1){assignMoveList(board,1,moveList,true);}
+			if (turn==-1){assignMoveList(board,0,moveList,true);}
 			if (moveList[0]==0){continue;}
 			
 			
@@ -370,7 +372,23 @@ int main(){
 	
 	
 	ofstream MyFile("TABLEBASE_KPk.h");
-
+	
+	MyFile << "/**************************\n";
+	MyFile << "*** function depends on ***\n";
+	MyFile << "**************************/\n";
+	MyFile << "\n";
+	MyFile << "//nothing\n";
+	MyFile << "\n";
+	MyFile << "/************\n";
+	MyFile << "*** Guard ***\n";
+	MyFile << "************/\n";
+	MyFile << "\n";
+	MyFile << "#ifndef TABKEBASE_KPkFILE\n";
+	MyFile << "#define TABKEBASE_KPkFILE\n";
+	MyFile << "\n";
+	MyFile << "/***************\n";
+	MyFile << "*** Let's go ***\n";
+	MyFile << "***************/\n\n\n";
 	MyFile << "//This is a KPk Database";
 	MyFile << "//White is always the side with the extra pawn\n";
 	MyFile << "//Pawn will always be on a-d column\n";
@@ -381,15 +399,8 @@ int main(){
 	MyFile << "//the number 900-x represents, there is a queen in x plys\n";
 	MyFile << "//Databse consists of 64*64*32*2=262.144 positions\n\n\n";
 
-	
-	/*
-	MyFile << "short int TABLEBASE_KPk["<<tbSize<<"]; \n\n\n";
-	
-	for (int hash=0; hash<tbSize; hash++){
-		if (hash%100000==0){cout << hash<<"\n";}
-		MyFile << "TABLEBASE_KPk["<<hash<<"]="<< tb[hash]<<"; \n";
-	}
-	*/
+
+
 
 	MyFile << "short int TABLEBASE_KPk["<<tbSize<<"]={";
 	for (int hash=0; hash<tbSize; hash++){
@@ -400,7 +411,8 @@ int main(){
 	}
 	MyFile << "};";
 	
-	
+	MyFile << "\n\n\n#endif";
+
 	
 	
 	MyFile.close();
