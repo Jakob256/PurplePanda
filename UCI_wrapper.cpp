@@ -151,6 +151,9 @@ int main() {
 			assignFen2Board(fenString,board);
 			key=fen2key(fenString);
 			
+			oracleSetPST_V1(board,key);
+			key=forcePST2key(board,key);
+			
 			movesFound=false;	
 			for (int i=1; i<input.length()-5; i++){
 				if (input.substr(i,5)=="moves"){
@@ -184,8 +187,7 @@ int main() {
 				}	
 			}
 			
-			oracleSetPST_V1(board,key);
-			key=forcePST2key(board,key);
+
 			
 		} else if (input.substr(0,8)=="go perft"){
 			perftDepth=stoi(input.substr(9,input.length()-9));
@@ -266,8 +268,14 @@ int main() {
 			} else { // there is at least wtime and btime
 				if (key%2==1){ // white's turn					
 					millisecondsTime2Think=winc+wtime/40;
+					if (millisecondsTime2Think>wtime*95/100){ // getting increment only after the move
+						millisecondsTime2Think=wtime*95/100;
+					}
 				} else {
 					millisecondsTime2Think=binc+btime/40;
+					if (millisecondsTime2Think>btime*95/100){ // getting increment only after the move
+						millisecondsTime2Think=btime*95/100;
+					}
 				}
 				
 				if (millisecondsTime2Think>maxMillisecondsTime2Think){millisecondsTime2Think=maxMillisecondsTime2Think;}
