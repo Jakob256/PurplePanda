@@ -10,6 +10,7 @@
 #include <stdlib.h>     // srand, rand
 #include <iomanip>      // for printing 2 floats
 #include <time.h>       // clock_t, clock, CLOCKS_PER_SEC,time
+#include <math.h>       // for abs for some reason
 
 using namespace std;
 
@@ -48,9 +49,6 @@ int main() {
 	/* initialize random seed: */
 	srand (time(NULL));
 	
-	//for (int i=0;i<hashSize;i++){hashPolicyTable[i];}  // this could be in global variables? 
-	
-	
 	int resetBoard[8][8]={2,1,0,0,0,0,-1,-2,3,1,0,0,0,0,-1,-3,4,1,0,0,0,0,-1,-4,5,1,0,0,0,0,-1,-5,6,1,0,0,0,0,-1,-6,4,1,0,0,0,0,-1,-4,3,1,0,0,0,0,-1,-3,2,1,0,0,0,0,-1,-2};
 	int board[8][8]={2,1,0,0,0,0,-1,-2,3,1,0,0,0,0,-1,-3,4,1,0,0,0,0,-1,-4,5,1,0,0,0,0,-1,-5,6,1,0,0,0,0,-1,-6,4,1,0,0,0,0,-1,-4,3,1,0,0,0,0,-1,-3,2,1,0,0,0,0,-1,-2};
 	unsigned long long int resetKey=0b100000000010000000100000000011111;
@@ -60,7 +58,7 @@ int main() {
 	int maxMillisecondsTime2Think=30000;
 	///////////////////
 	
-	int millisecondsTime2Think,perftDepth,hv;
+	int millisecondsTime2Think,perftDepth,hv,depth;
 	bool movesFound=false; //for fen ... moves ...
 	std::string input, fenString, moveString,word1,word2,word3,word4,word5,word6,word7,word8,word9;
 	int move[5],lastWhitespace,wtime,btime,winc,binc,time2think;
@@ -76,21 +74,25 @@ int main() {
 		} else if (input=="d"){
 			plotBoard(board);
 			printKey(key);
-			
+		
+		} else if (input=="deterministic"){
+			randomness=0;
+			cout << "randomness off\n";
+				
 		} else if (input=="debug"){
 			cout << "degubbing:\n\n";
 			plotBoard(board);
-			printKey(key);
+			
 			// here can be random code
-			/*int moveList[250*5];
+			int moveList[250*5];
+			int asd1,asd2;
+			
+			asd1=clock();
 			for (int i=0;i<1000*1000;i++){
-				assignMoveList(board,key,moveList,false);
+				assignMoveList(board,key,moveList);
 			}
-			cout << "weak finished\n";
-			for (int i=0;i<1000*1000;i++){
-				assignMoveList(board,key,moveList,true);
-			}
-			cout << "strong finished\n";*/	
+			asd2=clock();
+			cout << "duration: "<<asd2-asd1<< "\n";
 			
 			
 		} else if (input=="uciready"){
@@ -131,7 +133,7 @@ int main() {
 								assignMakeMove(board,move[0],move[1],move[2],move[3],move[4]);
 								
 								for (int k=98;k>=0;k--){previous100PositionHashes[k+1]=previous100PositionHashes[k];}  // move stack of previous 100 position
-								previous100PositionHashes[0]=hashFunction8(board,key); // save new Hash position
+								previous100PositionHashes[0]=hashFunction(board,key); // save new Hash position
 								
 								break;
 
@@ -140,7 +142,7 @@ int main() {
 					}
 				}
 			
-				oracleSetPST_V1(board,key);			
+				oracleSetPST_V1(board,key);
 				key=forcePST2key(board,key);
 			}
 			
@@ -178,7 +180,7 @@ int main() {
 								assignMakeMove(board,move[0],move[1],move[2],move[3],move[4]);
 								
 								for (int k=98;k>=0;k--){previous100PositionHashes[k+1]=previous100PositionHashes[k];}  // move stack of previous 100 position
-								previous100PositionHashes[0]=hashFunction8(board,key); // save new Hash position
+								previous100PositionHashes[0]=hashFunction(board,key); // save new Hash position
 								
 								break;
 							}
@@ -198,14 +200,18 @@ int main() {
 		***********************************/
 		
 		} else if (input=="go movetime 10000"){ 	// this is the first Lichess start comand when time is not yet ticking
-			engineV1(board, key, 500);
+			engineV1(board, key, 500,1000);
 			
 		} else if (input.substr(0,11)=="go movetime"){			// this is for arena with constant movetime
 			millisecondsTime2Think=stoi(input.substr(12,input.length()-12));
-			engineV1(board, key, millisecondsTime2Think);			
+			engineV1(board, key, millisecondsTime2Think,1000);			
+		
+		} else if (input.substr(0,8)=="go depth"){
+			depth=stoi(input.substr(9,input.length()-9));
+			engineV1(board, key, 1000000000,depth);			
 		
 		} else if (input=="go infinite"){ 						// used for analysis: as there is no interrupt, analysis is bounded to 10 seconds
-			engineV1(board, key, 10000);
+			engineV1(board, key, 10000,1000);
 			
 		} else if (input.substr(0,2)=="go"){					// this is for normal gameplay, where there might be additional increment
 			// expected input like: go wtime 120703 btime 120464 winc 1000 binc 1000
@@ -263,7 +269,7 @@ int main() {
 			if (word8=="binc"){binc=stoi(word9);}
 
 			if (word2=="empty"){ // only "go" found
-				engineV1(board, key, 750); // allows 80 moves in a 1 minute game.
+				engineV1(board, key, 750,1000); // allows 80 moves in a 1 minute game.
 				
 			} else { // there is at least wtime and btime
 				if (key%2==1){ // white's turn					
@@ -279,7 +285,7 @@ int main() {
 				}
 				
 				if (millisecondsTime2Think>maxMillisecondsTime2Think){millisecondsTime2Think=maxMillisecondsTime2Think;}
-				engineV1(board, key, millisecondsTime2Think);
+				engineV1(board, key, millisecondsTime2Think,1000);
 			}
 			
 		

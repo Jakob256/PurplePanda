@@ -105,42 +105,50 @@ unsigned long long int newKey (int board[8][8],unsigned long long int key, int c
 	*******************************************/
 	
 	
-	unsigned long long int hughNumber=8388608;  //=2^23
-	long long int a=pieceSquareTable[6+board[c1][r1]][c1][r1]*hughNumber;
-	long long int b=pieceSquareTable[6+board[c2][r2]][c2][r2]*hughNumber;
-	long long int c=pieceSquareTable[6+board[c1][r1]][c2][r2]*hughNumber;
+	unsigned long long int hugeNumber=8388608;  //=2^23
+	long long int a=pieceSquareTable[6+board[c1][r1]][c1][r1]*hugeNumber;
+	long long int b=pieceSquareTable[6+board[c2][r2]][c2][r2]*hugeNumber;
+	long long int c=pieceSquareTable[6+board[c1][r1]][c2][r2]*hugeNumber;
 	newKeyy -= a;  // that start piece is no longer where it was there
 	newKeyy -= b;  // that target square is for a moment empty
 	newKeyy += c;  // that target square is now the start piece
 	
+	/***********************
+	**** PST: casteling ****
+	***********************/
+	
 	if (abs(c1-c2)==2 && abs(board[c1][r1])==6){ // casteling: need to update Rook position
-		long long int a=pieceSquareTable[6+board[c1][r1]/3][((c2-2)/4)*7][r1]*hughNumber;  // column 6->column 7; column 2 -> column 0
-		long long int b=pieceSquareTable[6+board[c2][r2]/3][c2/2+2      ][r2]*hughNumber;  // column 6->column 5; column 2 -> column 3
+		a=pieceSquareTable[6+board[c1][r1]/3][((c2-2)/4)*7][r1]*hugeNumber;  // column 6->column 7; column 2 -> column 0
+		b=pieceSquareTable[6+board[c1][r1]/3][c2/2+2      ][r1]*hugeNumber;  // column 6->column 5; column 2 -> column 3
 		newKeyy -= a;  // that rook is removed
-		newKeyy += b;  // that rook is added		
+		newKeyy += b;  // that rook is added
 	}
 	
-	//// enPessant is not yet supported.
+	/***********************
+	**** PST: enpessant ****
+	***********************/
+	
+	if (adInfo==128){
+		a=pieceSquareTable[6-board[c1][r1]][c2][r1]*hugeNumber;
+		newKeyy -= a;  // that pawn is removed
+	}
+
+	/***********************
+	**** PST: promotion ****
+	***********************/
+	if (adInfo>=16 && adInfo !=128){
+		a=pieceSquareTable[6+board[c1][r1]][c2][r2]*hugeNumber;
+		b=pieceSquareTable[6+board[c1][r1]*adInfo/16][c2][r2]*hugeNumber;
+		newKeyy -= a;
+		newKeyy += b;
+	}
 	
 	
-	//cout << "Keyafter: "<<newKeyy <<" = "<< bitset<64>(newKeyy)<<"\n\n";
+	
 	
 	if (newKeyy > 1125899906842624){
 		cout << "onoooo\n";
-		//plotBoard(board);
-		//cout << "Key exiting newKey: "<<newKeyy <<" = "<< bitset<64>(newKeyy)<<"\n";
-		//cout << pieceSquareTable[board[c1][r1]][c1][r1] <<"ddddd\n";
-		//cout << pieceSquareTable[7+board[c1][r1]][c1][r1] <<"\n";
-		//cout << pieceSquareTable[7+board[c2][r2]][c2][r2] <<"\n";
-		//cout << pieceSquareTable[7+board[c1][r1]][c2][r2] <<"\n";
-		
-		//cout << 7+board[c1][r1] <<"bbb\n";
-		//cout << bitset<64>(pieceSquareTable[board[c1][r1]][c1][r1]*hughNumber) << "\n";
-		//cout << bitset<64>(pieceSquareTable[board[c2][r2]][c2][r2]*hughNumber) << "\n";
-		//cout << bitset<64>(pieceSquareTable[board[c1][r1]][c2][r2]*hughNumber) << "\n";
-		//sleep(1000000);
 	}
-	//cout << "newkeyy "<<newKeyy <<" = "<< bitset<64>(newKeyy)<<"\n";
 	
 	return newKeyy;
 }
