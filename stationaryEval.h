@@ -9,14 +9,14 @@
 *** Guard ***
 ************/
 
-#ifndef stationaryEvalV1FILE
-#define stationaryEvalV1FILE
+#ifndef stationaryEvalFILE
+#define stationaryEvalFILE
 
 /***************
 *** Let's go ***
 ***************/
 
-float stationaryEvalV1 (int board[8][8],unsigned long long int key){
+float stationaryEval (int board[8][8],unsigned long long int key){
 	countingStationaryEvalCalled++;
 	float eval;
 	int turn=-1+2*(key%2);

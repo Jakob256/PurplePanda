@@ -3,27 +3,27 @@
 **************************/
 
 #include "globalVariables.h"
-#include "evalV1.h"
+#include "eval.h"
 #include "printMoves.h"
-#include "preSearchCalculationsV1.h"
-#include "oracleV1.h"
-#include "oracleSetPST_V1.h"
-#include "assignMoveList.h"
+#include "preSearchCalculations.h"
+#include "oracle.h"
+#include "oracleSetPST.h"
+#include "assignMoveListAndSort.h"
 
 
 /************
 *** Guard ***
 ************/
 
-#ifndef engineV1FILE
-#define engineV1FILE
+#ifndef engineFILE
+#define engineFILE
 
 /***************
 *** Let's go ***
 ***************/
 
 
-void engineV1 (int board[8][8],unsigned long long int key, int time, int inputDepth){
+void engine (int board[8][8],unsigned long long int key, int time, int inputDepth){
 	/********************************************
 	**** tracking time and setting variables ****
 	********************************************/
@@ -31,8 +31,7 @@ void engineV1 (int board[8][8],unsigned long long int key, int time, int inputDe
 	turn=-1+2*(key%2);
 	int startTime=clock();
 	int endTime=startTime+time;
-	float eval=0;
-	bool searchCompleted=false;
+	float evaluation=0;
 
 	/************************************
 	***** reseting counting numbers *****
@@ -48,18 +47,17 @@ void engineV1 (int board[8][8],unsigned long long int key, int time, int inputDe
 	***************************************/
 
 	
-	preSearchCalculationsV1(board,key);
-	oracleV1(board,key);
-	oracleSetPST_V1(board,key);
+	preSearchCalculations(board,key);
+	oracle(board,key);
+	oracleSetPST(board,key);
 	
-	//cout << "key when entering engine after oracle shit: "<<key <<" = "<< bitset<64>(key)<<"\n";
 
 	/*********************************
 	***** start extensive search *****
 	*********************************/
 	
 	int moveList[250*5];
-	assignMoveList(board,key,moveList);
+	assignMoveListAndSort(board,key,moveList,true);
 	for (int i=0;i<5;i++){
 		globalBestMove[i]=moveList[i+1];
 	}
@@ -69,15 +67,15 @@ void engineV1 (int board[8][8],unsigned long long int key, int time, int inputDe
 		if (depth2go>inputDepth){break;}
 		globalMaxDepth=8;
 		if (depth2go>=8){globalMaxDepth=depth2go+2;}
-		if (abs(eval)==1000){break;} // break immediately if there is a mate evaluation
+		if (abs(evaluation)==1000){break;} // break immediately if there is a mate evaluation
 		if (clock()<endTime){
-			eval=evalV1(board,key,hashFunction(board,key),0,depth2go,-INF,+INF,endTime);
+			evaluation=eval(board,key,hashFunction(board,key),0,depth2go,-INF,+INF,endTime);
 			if (clock()<endTime){
 				
-				cout << "info depth "<< depth2go<<" score cp " << (int)(eval*100*turn) << " nodes "<< countingStationaryEvalCalled<< " pv ";
+				cout << "info depth "<< depth2go<<" score cp " << (int)(evaluation*100*turn) << " nodes "<< countingStationaryEvalCalled<< " pv ";
 				printMove(globalBestMove[0],globalBestMove[1],globalBestMove[2],globalBestMove[3],globalBestMove[4]);
 				cout << "\n";
-				if (abs(eval)==1000){break;} // a direct mate found
+				if (abs(evaluation)==1000){break;} // a direct mate found
 			}
 		}
 	}

@@ -20,7 +20,7 @@ using namespace std;
 
 #include "globalVariables.h" // can they be included in the engine?
 #include "plotBoard.h"
-#include "assignMoveList.h"
+#include "assignMoveListAndSort.h"
 #include "printKey.h"
 #include "newKey.h"
 #include "printMoves.h"
@@ -29,14 +29,9 @@ using namespace std;
 #include "perft.h"
 #include "fen2key.h"
 #include "hashFunction.h"
-#include "oracleSetPST_V1.h"
+#include "oracleSetPST.h"
 #include "forcePST2key.h"
-
-/*************
-*** Engine ***
-*************/
-
-#include "engineV1.h"
+#include "engine.h"
 
 
 /***************
@@ -89,7 +84,7 @@ int main() {
 			
 			asd1=clock();
 			for (int i=0;i<1000*1000;i++){
-				assignMoveList(board,key,moveList);
+				assignMoveListAndSort(board,key,moveList,false);
 			}
 			asd2=clock();
 			cout << "duration: "<<asd2-asd1<< "\n";
@@ -113,7 +108,7 @@ int main() {
 				}
 			}
 			key=resetKey;
-			oracleSetPST_V1(board,key);
+			oracleSetPST(board,key);
 			
 			// now check if there are extra moves given
 			if (input.substr(0,23)=="position startpos moves"){
@@ -142,7 +137,7 @@ int main() {
 					}
 				}
 			
-				oracleSetPST_V1(board,key);
+				oracleSetPST(board,key);
 				key=forcePST2key(board,key);
 			}
 			
@@ -153,7 +148,7 @@ int main() {
 			assignFen2Board(fenString,board);
 			key=fen2key(fenString);
 			
-			oracleSetPST_V1(board,key);
+			oracleSetPST(board,key);
 			key=forcePST2key(board,key);
 			
 			movesFound=false;	
@@ -200,18 +195,18 @@ int main() {
 		***********************************/
 		
 		} else if (input=="go movetime 10000"){ 	// this is the first Lichess start comand when time is not yet ticking
-			engineV1(board, key, 500,1000);
+			engine(board, key, 500,1000);
 			
 		} else if (input.substr(0,11)=="go movetime"){			// this is for arena with constant movetime
 			millisecondsTime2Think=stoi(input.substr(12,input.length()-12));
-			engineV1(board, key, millisecondsTime2Think,1000);			
+			engine(board, key, millisecondsTime2Think,1000);			
 		
 		} else if (input.substr(0,8)=="go depth"){
 			depth=stoi(input.substr(9,input.length()-9));
-			engineV1(board, key, 1000000000,depth);			
+			engine(board, key, 1000000000,depth);			
 		
 		} else if (input=="go infinite"){ 						// used for analysis: as there is no interrupt, analysis is bounded to 10 seconds
-			engineV1(board, key, 10000,1000);
+			engine(board, key, 10000,1000);
 			
 		} else if (input.substr(0,2)=="go"){					// this is for normal gameplay, where there might be additional increment
 			// expected input like: go wtime 120703 btime 120464 winc 1000 binc 1000
@@ -269,7 +264,7 @@ int main() {
 			if (word8=="binc"){binc=stoi(word9);}
 
 			if (word2=="empty"){ // only "go" found
-				engineV1(board, key, 750,1000); // allows 80 moves in a 1 minute game.
+				engine(board, key, 750,1000); // allows 80 moves in a 1 minute game.
 				
 			} else { // there is at least wtime and btime
 				if (key%2==1){ // white's turn					
@@ -285,7 +280,7 @@ int main() {
 				}
 				
 				if (millisecondsTime2Think>maxMillisecondsTime2Think){millisecondsTime2Think=maxMillisecondsTime2Think;}
-				engineV1(board, key, millisecondsTime2Think,1000);
+				engine(board, key, millisecondsTime2Think,1000);
 			}
 			
 		

@@ -2,9 +2,8 @@
 *** function depends on ***
 **************************/
 
-#include "stationaryEvalV1.h"
-#include "assignMoveList.h"
-#include "assignSortMovesV1.h"
+#include "stationaryEval.h"
+#include "assignMoveListAndSort.h"
 #include "assignMakeMove.h"
 #include "assignUndoMove.h"
 #include "hashFunction.h"
@@ -15,14 +14,14 @@
 *** Guard ***
 ************/
 
-#ifndef evalV1FILE
-#define evalV1FILE
+#ifndef evalFILE
+#define evalFILE
 
 /***************
 *** Let's go ***
 ***************/
 
-float evalV1 (int board[8][8],unsigned long long int key, long long int hash, int atDepth, int depth2Go, float alpha, float beta, int endTime ){
+float eval(int board[8][8],unsigned long long int key, long long int hash, int atDepth, int depth2Go, float alpha, float beta, int endTime ){
 	
 	countingEvalCalled+=1;
 	int turn;
@@ -33,10 +32,10 @@ float evalV1 (int board[8][8],unsigned long long int key, long long int hash, in
 	****************************************************************/
 	
 	if (depth2Go==0){
-		return stationaryEvalV1(board,key) + (rand() % 100)/1000000.*randomness;
+		return stationaryEval(board,key) + (rand() % 100)/1000000.*randomness;
 	}
 	if (atDepth==globalMaxDepth){
-		return stationaryEvalV1(board,key) + (rand() % 100)/1000000.*randomness;
+		return stationaryEval(board,key) + (rand() % 100)/1000000.*randomness;
 	}
 	
 	
@@ -58,7 +57,14 @@ float evalV1 (int board[8][8],unsigned long long int key, long long int hash, in
 	int moveList[250*5];
 	
 	// generate moves
-	assignMoveList(board,key,moveList);
+	
+	if (atDepth<=5){
+		assignMoveListAndSort(board,key,moveList,true); // sorting moves
+	} else {
+		assignMoveListAndSort(board,key,moveList,false);
+	}
+	
+	
 	if (moveList[0]==0){ //there is a final evaluation
 		if (isKingInCheck(board,turn,0,0)!=0){
 			return -turn*1000;
@@ -72,7 +78,6 @@ float evalV1 (int board[8][8],unsigned long long int key, long long int hash, in
 	***** Do move ordering for alpha-beta search *****
 	*************************************************/
 
-	if (atDepth<=4){assignSortMovesV1(moveList,board);}
 	if (atDepth==0){
 		for (int i=1; i<=moveList[0];i++){
 			if (moveList[5*i-4]==globalBestMove[0] && 
@@ -99,9 +104,7 @@ float evalV1 (int board[8][8],unsigned long long int key, long long int hash, in
 	if (atDepth<= 5 && atDepth>0){
 		eligibleForHashMoveOrdering=true;
 	}
-	int hash4moveOrder;
-	int hashOfMove;
-	int posOfMove,hv;
+	int hash4moveOrder,hashOfMove,posOfMove,hv;
 	bool switched=false;
 	int switchedWith=-1;
 
@@ -158,13 +161,13 @@ float evalV1 (int board[8][8],unsigned long long int key, long long int hash, in
 		assignMakeMove(board,moveList[5*i-4],moveList[5*i-3],moveList[5*i-2],moveList[5*i-1],moveList[5*i-0]);
 		
 		if (moveList[5*i]==0){ // no capture or anything
-			score=evalV1(board,newKeyy,newHashh,atDepth+1,depth2Go-1,alpha,beta,endTime);
+			score=eval(board,newKeyy,newHashh,atDepth+1,depth2Go-1,alpha,beta,endTime);
 			
 		} else {
 			if (depth2Go>1){
-				score=evalV1(board,newKeyy,newHashh,atDepth+1,depth2Go-1,alpha,beta,endTime);
+				score=eval(board,newKeyy,newHashh,atDepth+1,depth2Go-1,alpha,beta,endTime);
 			} else {
-				score=evalV1(board,newKeyy,newHashh,atDepth+1,1,alpha,beta,endTime);
+				score=eval(board,newKeyy,newHashh,atDepth+1,1,alpha,beta,endTime);
 			}	
 		}
 		

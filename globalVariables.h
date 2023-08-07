@@ -26,8 +26,11 @@ int randomness=1;
 **************************/
 
 // there are 4 directions: N,E, NW, NW in that order. Here in the list are the pieces marked that can go that way (i.e. rook, rook, bishop, bishop)
-int moveGenerationHelper[4]={2,2,4,4};
+const int moveGenerationHelper[4]={2,2,4,4};
 
+// directions in that order N,S,E,W,NW,SE,NE,SW,8 knight directions
+const int dx_LIST[16]={ 0, 0, 1,-1,-1, 1, 1,-1,-2,-2,-1,-1,+1,+1,+2,+2};
+const int dy_LIST[16]={ 1,-1, 0, 0, 1,-1, 1,-1,-1,+1,-2,+2,-2,+2,-1,+1};
 
 /***********************
 ** for counting calls **
@@ -73,7 +76,6 @@ int globalSide2Play=0;
 ** for oracle **
 ***************/
 
-bool oracleStrongLegalMoves;
 int moveOpponentToEdge;
 long long int pieceSquareTable[6+1+6][8][8]={0};  // long long necessary to add it to newKeyy
 

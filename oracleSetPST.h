@@ -8,14 +8,14 @@
 *** Guard ***
 ************/
 
-#ifndef oracleSetPST_V1FILE
-#define oracleSetPST_V1FILE
+#ifndef oracleSetPSTFILE
+#define oracleSetPSTFILE
 
 /***************
 *** Let's go ***
 ***************/
 
-void oracleSetPST_V1(int board[8][8],unsigned long long int key){
+void oracleSetPST(int board[8][8],unsigned long long int key){
 	
 	/***********************
 	** Piece Square Table **

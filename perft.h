@@ -2,7 +2,7 @@
 *** function depends on ***
 **************************/
 
-#include "assignMakeMove.h"
+#include "assignMoveListAndSort.h"
 #include "newKey.h"
 #include "newHash.h"
 #include "hashFunction.h"
@@ -22,7 +22,7 @@
 *** Let's go ***
 ***************/
 
-long int perftBackground(int board[8][8], unsigned long long int key, long long int hash, int depth, int atDepth){
+long long int perftBackground(int board[8][8], unsigned long long int key, long long int hash, int depth, int atDepth){
 	
 	/*******************************************
 	**** Debugging/Testing: key (nrOfPiece) ****
@@ -120,19 +120,20 @@ long int perftBackground(int board[8][8], unsigned long long int key, long long 
 	
 	
 	int moveList[250*5];
-	long int count;
+	long long int count;
+	long long int positions=0;
 	unsigned long long int newKeyy;
 	long long int newHashh;
 	
 	
-	assignMoveList(board,key,moveList);
+	assignMoveListAndSort(board,key,moveList,false);
 
 	
 	if (depth==1){
 		return moveList[0];
 	}
-		
-	int positions=0;
+	
+	
 	for (int i=1; i<=moveList[0];i++){
 		newKeyy=newKey(board,key,moveList[i*5-4],moveList[i*5-3],moveList[i*5-2],moveList[i*5-1],moveList[i*5]);
 		newHashh=newHash(board,key,hash,moveList[i*5-4],moveList[i*5-3],moveList[i*5-2],moveList[i*5-1],moveList[i*5]);
@@ -154,10 +155,16 @@ long int perftBackground(int board[8][8], unsigned long long int key, long long 
 }
 
 void perft(int board[8][8], unsigned long long int key, int depth){
-	long int count;
+	long long int count;
 	long long int hash=hashFunction(board,key);
+	int asd1,asd2;
+	asd1=clock();
 	count=perftBackground(board,key, hash, depth, 0);
+	asd2=clock();
+	
 	cout << "\nNodes: "<<count<<"\n";
+	cout << "perft duration: "<<asd2-asd1<< "\n";
+	
 }
 
 #endif

@@ -8,14 +8,14 @@
 *** Guard ***
 ************/
 
-#ifndef preSearchCalculationsV1FILE
-#define preSearchCalculationsV1FILE
+#ifndef preSearchCalculationsFILE
+#define preSearchCalculationsFILE
 
 /***************
 *** Let's go ***
 ***************/
 
-void preSearchCalculationsV1(int board[8][8],unsigned long long int key){
+void preSearchCalculations(int board[8][8],unsigned long long int key){
 	
 	int piece;
 	
