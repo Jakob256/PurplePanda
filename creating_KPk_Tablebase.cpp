@@ -15,7 +15,7 @@ using namespace std;
 #include "isKingInCheck.h"
 #include "assignMakeMove.h"
 #include "assignUndoMove.h"
-#include "assignMoveList.h"
+#include "assignMoveListAndSort.h"
 #include "printMoves.h"
 
 /***********
@@ -226,8 +226,8 @@ int main(){
 				if (board[row][col]==1){board[row][col]=5;}
 			}
 		}
-		if (!isKingInCheck(board,-1)){
-			assignMoveList(board,0,moveList,true);
+		if (isKingInCheck(board,-1,0,0)==0){
+			assignMoveListAndSort(board,0,moveList,false);
 			if (moveList[0]==0){
 				continue;
 			}
@@ -270,11 +270,11 @@ int main(){
 			if (position_P==0 || position_P==8 || position_P==16 || position_P==24){continue;}
 
 			if (piecesNextToEachOther(board,6,-6)){continue;}
-			if (turn==1 && isKingInCheck(board,-1)){continue;}
+			if ((turn==1) && (isKingInCheck(board,-1,0,0)!=0)){continue;}
 			
 			// generating the moveList and check for stalemate
-			if (turn==1){assignMoveList(board,1,moveList,true);}
-			if (turn==-1){assignMoveList(board,0,moveList,true);}
+			if (turn==1){assignMoveListAndSort(board,1,moveList,false);}
+			if (turn==-1){assignMoveListAndSort(board,0,moveList,false);}
 			if (moveList[0]==0){continue;}
 			
 			
