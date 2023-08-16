@@ -1,8 +1,8 @@
+![](https://raw.github.com/Jakob256/PurplePanda/master/logo.png)
+
 # PurplePanda Chess Engine
 
-Have fun exploring the code or playing the engine.
-
-Public and full UCI support since Version 10.
+Have fun exploring the code or playing the engine (UCI).
 
 
 ## Playing/Compiling it yourself
@@ -11,10 +11,11 @@ Compiling "UCI_wrapper.cpp" will give you the latest PurplePanda version.
 
 ```
 cd src
-g++ UCI_wrapper.cpp -o PurplePanda12.exe -march=native -O3
+g++ UCI_wrapper.cpp -o PurplePanda.exe -march=native -O3
 ```
 
-Alternatively, copy the Engine exe you like to play from the folder EngineVersion. Additionally, you might have to copy the two provided dll files also to the same location as the engine.
+Alternatively, find the executables under "Releases". You will have to copy the two provided dll files also to the same location as the engine.
+
 
 
 ## Vesion 12: Score vs V11 58% (Elo +56)

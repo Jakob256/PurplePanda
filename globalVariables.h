@@ -160,8 +160,8 @@ long long int hashTurnNumber=217122680661300;
 ***************************/
 
 
-int hashMoveOrderingTableSize=100*1000*1000;
-long int hashMoveOrderingTable[100*1000*1000][2]={0};  // must be the same number as above
+int hashMoveOrderingTableSize= 16000000;  // 2^24=16777216 would be the limit to have a hash-table size of 128MB
+long int hashMoveOrderingTable[16000000][2]={0};  // must be the same number as above
 // first column to store the exact hash, to detect hash collisions
 // second column to store the id of a move:
 // ID: move[0]+move[1]*20 + move[2]*20^2+ ... +move[5]*20^4
