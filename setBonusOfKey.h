@@ -2,27 +2,21 @@
 *** function depends on ***
 **************************/
 
-#include "globalVariables.h"
+#include "positionFeatures.h"
 
 /************
 *** Guard ***
 ************/
 
-#ifndef forcePST2keyFILE
-#define forcePST2keyFILE
+#ifndef setBonusOfKeyFILE
+#define setBonusOfKeyFILE
 
 /***************
 *** Let's go ***
 ***************/
 
-unsigned long long int forcePST2key(int board[8][8],unsigned long long int key){
-	int bonus=0;
-	
-	for (int c=0; c<8; c++){
-		for (int r=0; r<8; r++){
-			bonus+= pieceSquareTable[6+board[c][r]][c][r];
-		}
-	}
+unsigned long long int setBonusOfKey(int board[8][8],unsigned long long int key){
+	int bonus=bonusFunction(board,key);
 	
 
 	// adding bonus 2 key ==== this part is long because of type conversion issues

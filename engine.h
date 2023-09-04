@@ -5,9 +5,8 @@
 #include "globalVariables.h"
 #include "eval.h"
 #include "printMoves.h"
-#include "preSearchCalculations.h"
 #include "oracle.h"
-#include "oracleSetPST.h"
+#include "setBonusOfKey.h"
 #include "assignMoveListAndSort.h"
 
 
@@ -27,8 +26,8 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	/********************************************
 	**** tracking time and setting variables ****
 	********************************************/
-	int turn;
-	turn=-1+2*(key%2);
+	
+	int turn=-1+2*(key%2);
 	int startTime=clock();
 	int endTime=startTime+time;
 	float evaluation=0;
@@ -42,16 +41,13 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	countingMoveGenerationCalled=0;
 	countingHashesStored=0;
 	
-	/***************************************
-	***** do preProcessing of position *****
-	***************************************/
+	/*****************************
+	***** consult the oracle *****
+	*****************************/
 
-	
-	preSearchCalculations(board,key);
 	oracle(board,key);
-	oracleSetPST(board,key);
+	key=setBonusOfKey(board,key);
 	
-
 	/*********************************
 	***** start extensive search *****
 	*********************************/
@@ -66,8 +62,7 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	for (int depth2go=2; depth2go<=20; depth2go++){	
 		if (depth2go>inputDepth){break;}
 		globalMaxDepth=8;
-		if (depth2go>=8){globalMaxDepth=depth2go+2;}
-		if (abs(evaluation)==1000){break;} // break immediately if there is a mate evaluation
+		if (depth2go>=7){globalMaxDepth=depth2go+2;}
 		if (clock()<endTime){
 			evaluation=eval(board,key,hashFunction(board,key),0,depth2go,-INF,+INF,endTime);
 			if (clock()<endTime){
@@ -75,9 +70,10 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 				cout << "info depth "<< depth2go<<" score cp " << (int)(evaluation*100*turn) << " nodes "<< countingStationaryEvalCalled<< " pv ";
 				printMove(globalBestMove[0],globalBestMove[1],globalBestMove[2],globalBestMove[3],globalBestMove[4]);
 				cout << "\n";
-				if (abs(evaluation)==1000){break;} // a direct mate found
 			}
 		}
+		
+		if (abs(evaluation)==1000){break;} // break immediately if there is a mate evaluation
 	}
 	
 	

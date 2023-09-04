@@ -16,10 +16,16 @@
 ***************/
 
 int globalBestMove[5];
-float INF=10000000.*10000000000.*1000000000.*10000000000.;
+const float INF=10000000.*10000000000.*1000000000.*10000000000.;
 int globalMaxDepth;
-int randomness=1;
 
+/******************************
+*** for evaluation / oracle ***
+******************************/
+
+int randomness=1;
+int moveOpponentToEdge;
+long long int pieceSquareTable[6+1+6][8][8]={0};  // long long necessary to add it to newKeyy
 
 /**************************
 *** for move generation ***
@@ -47,38 +53,6 @@ int countingHashesStored;
 
 long long int previous100PositionHashes[100]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-/******************************
-** for preSearchCalculations **
-******************************/
-
-int globalNrWhitePieces=0;
-int globalNrBlackPieces=0;
-int globalNrWhitePawns=0;
-int globalNrBlackPawns=0;
-int globalNrWhiteRooks=0;
-int globalNrBlackRooks=0;
-int globalNrWhiteKnights=0;
-int globalNrBlackKnights=0;
-int globalNrWhiteBishops=0;
-int globalNrBlackBishops=0;
-int globalNrWhiteQueens=0;
-int globalNrBlackQueens=0;
-
-int globalPieceScoreWhite=0;
-int globalPieceScoreBlack=0;
-int globalPiecesOnHomeSquareWhite=0;
-int globalPiecesOnHomeSquareBlack=0;
-
-int globalSide2Play=0;
-
-
-/***************
-** for oracle **
-***************/
-
-int moveOpponentToEdge;
-long long int pieceSquareTable[6+1+6][8][8]={0};  // long long necessary to add it to newKeyy
-
 
 /**********************
 ** hashes in general **
@@ -86,7 +60,7 @@ long long int pieceSquareTable[6+1+6][8][8]={0};  // long long necessary to add 
 
 // I want abs(hash)<2^63, so each number should be less than 2^63/6/(64+1)=2*10^16 to
 // avaiod overflows, even though it might not even be a problem
-long long int hashSquareNumbers[8][8]={
+const long long int hashSquareNumbers[8][8]={
 	314159265358979,//a1
 	323846264338327,//a2
 	950288419716939,//a3
@@ -153,14 +127,14 @@ long long int hashSquareNumbers[8][8]={
 	195778185778053};//h8
 	
 
-long long int hashTurnNumber=217122680661300;
+const long long int hashTurnNumber=217122680661300;
 
 /***************************
 ** for hash move ordering **
 ***************************/
 
 
-int hashMoveOrderingTableSize= 16000000;  // 2^24=16777216 would be the limit to have a hash-table size of 128MB
+const int hashMoveOrderingTableSize= 16000000;  // 2^24=16777216 would be the limit to have a hash-table size of 128MB
 long int hashMoveOrderingTable[16000000][2]={0};  // must be the same number as above
 // first column to store the exact hash, to detect hash collisions
 // second column to store the id of a move:

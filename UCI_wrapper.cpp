@@ -18,7 +18,7 @@ using namespace std;
 *** function depends on ***
 **************************/
 
-#include "globalVariables.h" // can they be included in the engine?
+#include "globalVariables.h"
 #include "plotBoard.h"
 #include "assignMoveListAndSort.h"
 #include "printKey.h"
@@ -28,11 +28,11 @@ using namespace std;
 #include "assignMoveString2Move.h"
 #include "perft.h"
 #include "fen2key.h"
-#include "hashFunction.h"
-#include "oracleSetPST.h"
-#include "forcePST2key.h"
+#include "positionFeatures.h"
+#include "oracle.h"
+#include "setBonusOfKey.h"
 #include "engine.h"
-
+#include "stationaryEval.h"
 
 /***************
 *** Let's go ***
@@ -48,6 +48,7 @@ int main() {
 	int board[8][8]={2,1,0,0,0,0,-1,-2,3,1,0,0,0,0,-1,-3,4,1,0,0,0,0,-1,-4,5,1,0,0,0,0,-1,-5,6,1,0,0,0,0,-1,-6,4,1,0,0,0,0,-1,-4,3,1,0,0,0,0,-1,-3,2,1,0,0,0,0,-1,-2};
 	unsigned long long int resetKey=0b100000000010000000100000000011111;
 	unsigned long long int key=0b100000000010000000100000000011111;
+	oracle(board,key);
 	
 	///////////////////
 	int maxMillisecondsTime2Think=30000;
@@ -64,12 +65,34 @@ int main() {
 		std::getline(std::cin, input);
 
 		if (input=="uci"){
-			cout << "id name Purple Panda 12\nid author J. Steininger\nuciok\n";
+			cout << "id name Purple Panda 13\nid author J. Steininger\nuciok\n";
 			
 		} else if (input=="d"){
 			plotBoard(board);
 			printKey(key);
-		
+			oracle(board,key);
+			key=setBonusOfKey(board,key);
+			cout << "Stationary eval: "<< stationaryEval(board,key)<< "\n\n";
+			
+		} else if (input=="pst"){
+			oracle(board,key);
+			for (int color=1;color>=-1;color-=2){
+				for (int piece=1;piece<=6;piece++){
+					cout << "Piece: "<<color*piece<<"\n";
+					for (int row=7; row>=0; row--){
+						for (int col=0; col<8; col++){
+							hv=pieceSquareTable[piece*color+6][col][row];
+							if (hv<=-10){cout << hv<< "  ";}
+							else if (hv<0){cout <<" " << hv<< "  ";}
+							else if (hv<10){cout <<"  " << hv<< "  ";}
+							else {cout <<" " << hv<< "  ";}
+						}
+						cout <<"\n";
+					}
+					cout << "\n\n";
+				}
+			}
+			
 		} else if (input=="deterministic"){
 			randomness=0;
 			cout << "randomness off\n";
@@ -108,7 +131,7 @@ int main() {
 				}
 			}
 			key=resetKey;
-			oracleSetPST(board,key);
+			oracle(board,key);
 			
 			// now check if there are extra moves given
 			if (input.substr(0,23)=="position startpos moves"){
@@ -137,8 +160,8 @@ int main() {
 					}
 				}
 			
-				oracleSetPST(board,key);
-				key=forcePST2key(board,key);
+				oracle(board,key);
+				key=setBonusOfKey(board,key);
 			}
 			
 		} else if (input.substr(0,12)=="position fen"){
@@ -148,8 +171,8 @@ int main() {
 			assignFen2Board(fenString,board);
 			key=fen2key(fenString);
 			
-			oracleSetPST(board,key);
-			key=forcePST2key(board,key);
+			oracle(board,key);
+			key=setBonusOfKey(board,key);
 			
 			movesFound=false;	
 			for (int i=1; i<input.length()-5; i++){

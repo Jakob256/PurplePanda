@@ -10,12 +10,16 @@ Have fun exploring the code or playing the engine (UCI).
 Compiling "UCI_wrapper.cpp" will give you the latest PurplePanda version.
 
 ```
-cd src
 g++ UCI_wrapper.cpp -o PurplePanda.exe -march=native -O3
 ```
 
 Alternatively, find the executables under "Releases". You will have to copy the two provided dll files also to the same location as the engine.
 
+
+## Vesion 13: Score vs V12 61% (Elo +78)
+* beta-cutoffs at frontier nodes
+
+* tuning of a search parameters
 
 
 ## Vesion 12: Score vs V11 58% (Elo +56)

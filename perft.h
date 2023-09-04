@@ -5,11 +5,12 @@
 #include "assignMoveListAndSort.h"
 #include "newKey.h"
 #include "newHash.h"
-#include "hashFunction.h"
+#include "positionFeatures.h"
 #include "assignMakeMove.h"
 #include "assignUndoMove.h"
 #include "printMoves.h"
 #include "printKey.h"
+
 
 /************
 *** Guard ***
@@ -28,48 +29,29 @@ long long int perftBackground(int board[8][8], unsigned long long int key, long 
 	**** Debugging/Testing: key (nrOfPiece) ****
 	*******************************************/
 	
-	int nrPieces1=0,nrPieces2;
-	for (int i=0;i<8;i++){
-		for (int j=0;j<8;j++){
-			if (board[i][j]!=0){
-				nrPieces1+=1;
-			}
-		}
-	}
-	nrPieces2=((key>>9)&63);
+	int nrPieces1=nrPiecesFunction(board,key);
+	int nrPieces2=((key>>9)&63);
 
-	if (nrPieces1!=nrPieces2){
+	if (nrPieces1 != nrPieces2){
 		cout << "nrPieces is wrong\n";
-		cout << "according to counting: " << nrPieces1<< "\n";
+		cout << "according to calculation: " << nrPieces1<< "\n";
 		cout << "according to updated key: " << nrPieces2 << "\n";
 		plotBoard(board);
 		printKey(key);
 		cout << "\n\n";
 	}
 	
+	
 	/*******************************************
 	**** Debugging/Testing: key (Score) ****
 	*******************************************/
 	
-	int score1=0,score2;
-	for (int i=0;i<8;i++){
-		for (int j=0;j<8;j++){
-			if (board[i][j]== 1){score1+=1;}
-			if (board[i][j]== 2){score1+=5;}
-			if (board[i][j]== 3){score1+=3;}
-			if (board[i][j]== 4){score1+=3;}
-			if (board[i][j]== 5){score1+=9;}
-			if (board[i][j]==-1){score1-=1;}
-			if (board[i][j]==-2){score1-=5;}
-			if (board[i][j]==-3){score1-=3;}
-			if (board[i][j]==-4){score1-=3;}
-			if (board[i][j]==-5){score1-=9;}
-		}
-	}
-	score2= int((key>>15)&255)-128;
+	int score1= scoreFunction(board,key);
+	int score2= int((key>>15)&255)-128;
+	
 	if (score1 != score2){
 		cout << "score calculated is wrong\n";
-		cout << "according to counting: " << score1<< "\n";
+		cout << "according to calculation: " << score1<< "\n";
 		cout << "according to updated key: " << score2 << "\n";
 		plotBoard(board);
 		printKey(key);
@@ -77,22 +59,16 @@ long long int perftBackground(int board[8][8], unsigned long long int key, long 
 	}
 	
 	
-	
-	
 	/************************************************
 	**** Debugging/Testing: key (bonus from PST) ****
 	************************************************/
-
-	int bonus1=0,bonus2;
-	for (int c=0; c<8; c++){
-		for (int r=0; r<8; r++){
-			bonus1+= pieceSquareTable[6+board[c][r]][c][r];
-		}
-	}
-	bonus2=(int((key>>23)&1023)-512);
+	
+	
+	int bonus1=bonusFunction(board,key);
+	int bonus2=(int((key>>23)&1023)-512);
 	if (bonus1 != bonus2){
 		cout << "bonus calculated is wrong\n";
-		cout << "according to counting: " << bonus1<< "\n";
+		cout << "according to calculation: " << bonus1<< "\n";
 		cout << "according to updated key: " << bonus2 << "\n";
 		plotBoard(board);
 		printKey(key);

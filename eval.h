@@ -6,7 +6,7 @@
 #include "assignMoveListAndSort.h"
 #include "assignMakeMove.h"
 #include "assignUndoMove.h"
-#include "hashFunction.h"
+#include "positionFeatures.h"
 #include "newKey.h"
 #include "globalVariables.h"
 
@@ -24,8 +24,7 @@
 float eval(int board[8][8],unsigned long long int key, long long int hash, int atDepth, int depth2Go, float alpha, float beta, int endTime ){
 	
 	countingEvalCalled+=1;
-	int turn;
-	turn=-1+2*(key%2);
+	int turn=-1+2*(key%2);
 	
 	/****************************************************************
 	***** First we examine, wether we need to return imediately *****
@@ -48,10 +47,34 @@ float eval(int board[8][8],unsigned long long int key, long long int hash, int a
 	}
 	
 		
+	/*********************************************************
+	***** Is the current position so good we can abbort? *****
+	*********************************************************/
+
+	// currently, when we are at "depth2Go==1", we will only make one move and then evaluate, unless this move is a capture.
+	// so: if we are in a very good position, any non-capture move will cause a cutoff. Therefore, we don't need the moveGeneration at all.
+	// but maybe, we should at least check that we are not in check, otherwise there might be stupid consequences... so:
+	
+	float standingPat;
+	bool pruneEVERYTHING=false;
+	if ((depth2Go==1) && (atDepth>=6) && (moveOpponentToEdge==0)){
+		standingPat=stationaryEval(board,key);
+		if (turn==+1 && standingPat>= beta+0.10+0.02 ){pruneEVERYTHING=true;} //0.1 is the highest number the Bonus can change by without being a capture.
+		if (turn==-1 && standingPat<= alpha-0.10-0.02){pruneEVERYTHING=true;}	
+		if (pruneEVERYTHING==true){
+			if (isKingInCheck(board,turn,0,0)==0){
+				return standingPat;
+			}
+		}
+	}
+	// it seems cutting off only is beneficial, if I don't risk getting to the same position with iterative deepening again but then don't have a lookup ready
+	
+	
+	
 	/**********************************************
 	***** Now we prepare the moves to examine *****
 	**********************************************/
-
+	
 	
 	float bestScore=-INF*turn;
 	int moveList[250*5];
