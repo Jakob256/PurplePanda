@@ -39,24 +39,26 @@ int isKingInCheck(int board[8][8],int color,int col, int row){
 	
 
 	// check knight
-	targetRow=row-2;targetCol=col-1;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-3*color){return 1+targetCol+8*targetRow;}
-	targetRow=row-2;targetCol=col+1;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-3*color){return 1+targetCol+8*targetRow;}
-	targetRow=row-1;targetCol=col-2;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-3*color){return 1+targetCol+8*targetRow;}
-	targetRow=row-1;targetCol=col+2;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-3*color){return 1+targetCol+8*targetRow;}
-	targetRow=row+1;targetCol=col-2;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-3*color){return 1+targetCol+8*targetRow;}
-	targetRow=row+1;targetCol=col+2;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-3*color){return 1+targetCol+8*targetRow;}
-	targetRow=row+2;targetCol=col-1;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-3*color){return 1+targetCol+8*targetRow;}
-	targetRow=row+2;targetCol=col+1;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-3*color){return 1+targetCol+8*targetRow;}
+	if (col>=2 && row>=1 && board[col-2][row-1]==-3*color){return 1+(col-2)+8*(row-1);}
+	if (col>=2 && row<=6 && board[col-2][row+1]==-3*color){return 1+(col-2)+8*(row+1);}	
+	if (col>=1 && row>=2 && board[col-1][row-2]==-3*color){return 1+(col-1)+8*(row-2);}
+	if (col>=1 && row<=5 && board[col-1][row+2]==-3*color){return 1+(col-1)+8*(row+2);}
+	if (col<=6 && row>=2 && board[col+1][row-2]==-3*color){return 1+(col+1)+8*(row-2);}
+	if (col<=6 && row<=5 && board[col+1][row+2]==-3*color){return 1+(col+1)+8*(row+2);}
+	if (col<=5 && row>=1 && board[col+2][row-1]==-3*color){return 1+(col+2)+8*(row-1);}
+	if (col<=5 && row<=6 && board[col+2][row+1]==-3*color){return 1+(col+2)+8*(row+1);}
 
 	// check king (this is necessary to avoid a king stepping next to the other king)
-	targetRow=row-1;targetCol=col-1;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-6*color){return 1+targetCol+8*targetRow;}
-	targetRow=row-1;targetCol=col+0;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-6*color){return 1+targetCol+8*targetRow;}
-	targetRow=row-1;targetCol=col+1;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-6*color){return 1+targetCol+8*targetRow;}
-	targetRow=row+0;targetCol=col-1;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-6*color){return 1+targetCol+8*targetRow;}
-	targetRow=row+0;targetCol=col+1;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-6*color){return 1+targetCol+8*targetRow;}
-	targetRow=row+1;targetCol=col-1;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-6*color){return 1+targetCol+8*targetRow;}
-	targetRow=row+1;targetCol=col+0;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-6*color){return 1+targetCol+8*targetRow;}
-	targetRow=row+1;targetCol=col+1;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-6*color){return 1+targetCol+8*targetRow;}
+	if (col>=1 && row>=1 && board[col-1][row-1]==-6*color){return 1+(col-1)+8*(row-1);}
+	if (col>=1           && board[col-1][row  ]==-6*color){return 1+(col-1)+8*(row  );}	
+	if (col>=1 && row<=6 && board[col-1][row+1]==-6*color){return 1+(col-1)+8*(row+1);}
+	if (          row>=1 && board[col  ][row-1]==-6*color){return 1+(col  )+8*(row-1);}
+	if (          row<=6 && board[col  ][row+1]==-6*color){return 1+(col  )+8*(row+1);}
+	if (col<=6 && row>=1 && board[col+1][row-1]==-6*color){return 1+(col+1)+8*(row-1);}
+	if (col<=6           && board[col+1][row  ]==-6*color){return 1+(col+1)+8*(row  );}
+	if (col<=6 && row<=6 && board[col+1][row+1]==-6*color){return 1+(col+1)+8*(row+1);}
+	
+	
 
 	for (int i=0; i<4; i++){  //rook (and queen)
 		if (i==0){dx=1;dy=0;}
@@ -64,8 +66,8 @@ int isKingInCheck(int board[8][8],int color,int col, int row){
 		if (i==2){dx=0;dy=1;}
 		if (i==3){dx=0;dy=-1;}
 		for (int j=1; j<8; j++){
-			targetRow=row+dy*j;targetCol=col+dx*j;piece=board[targetCol][targetRow]; 
-			if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7){ // target square on board
+			targetCol=col+dx*j;targetRow=row+dy*j;piece=board[targetCol][targetRow]; 
+			if (targetCol>=0 && targetCol <=7 && targetRow>=0 && targetRow <=7){ // target square on board
 				if (piece==-2*color){return 1+targetCol+8*targetRow;}
 				if (piece==-5*color){return 1+targetCol+8*targetRow;}
 				if (piece!=0){break;}
@@ -80,8 +82,8 @@ int isKingInCheck(int board[8][8],int color,int col, int row){
 		if (i==2){dx=-1;dy=1;}
 		if (i==3){dx=-1;dy=-1;}
 		for (int j=1; j<8; j++){
-			targetRow=row+dy*j;targetCol=col+dx*j;piece=board[targetCol][targetRow]; 
-			if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7){ // target square on board
+			targetCol=col+dx*j;targetRow=row+dy*j;piece=board[targetCol][targetRow]; 
+			if (targetCol>=0 && targetCol <=7 && targetRow>=0 && targetRow <=7){ // target square on board
 				if (piece==-4*color){return 1+targetCol+8*targetRow;}
 				if (piece==-5*color){return 1+targetCol+8*targetRow;}
 				if (piece!=0){break;}
@@ -92,8 +94,8 @@ int isKingInCheck(int board[8][8],int color,int col, int row){
 	
 	
 	//check pawn
-	targetRow=row+color;targetCol=col-1;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-1*color){return 1+targetCol+8*targetRow;}
-	targetRow=row+color;targetCol=col+1;piece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && piece==-1*color){return 1+targetCol+8*targetRow;}
+	targetCol=col-1;targetRow=row+color;piece=board[targetCol][targetRow]; if (targetCol>=0 && targetCol <=7 && targetRow>=0 && targetRow <=7 && piece==-1*color){return 1+targetCol+8*targetRow;}
+	targetCol=col+1;targetRow=row+color;piece=board[targetCol][targetRow]; if (targetCol>=0 && targetCol <=7 && targetRow>=0 && targetRow <=7 && piece==-1*color){return 1+targetCol+8*targetRow;}
 
 	return 0;
 }

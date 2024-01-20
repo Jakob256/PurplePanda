@@ -15,9 +15,9 @@
 *** Let's go ***
 ***************/
 
-int globalBestMove[5];
+int rootBestMove[5];
 const float INF=10000000.*10000000000.*1000000000.*10000000000.;
-int globalMaxDepth;
+
 
 /******************************
 *** for evaluation / oracle ***
@@ -46,6 +46,7 @@ int countingStationaryEvalCalled;
 int countingEvalCalled;
 int countingMoveGenerationCalled;
 int countingHashesStored;
+bool switch1=false;
 
 /*****************************
 ** for avoiding repetitions **
@@ -129,16 +130,17 @@ const long long int hashSquareNumbers[8][8]={
 
 const long long int hashTurnNumber=217122680661300;
 
-/***************************
-** for hash move ordering **
-***************************/
+/***************
+** Hashtables **
+***************/
 
 
-const int hashMoveOrderingTableSize= 16000000;  // 2^24=16777216 would be the limit to have a hash-table size of 128MB
-long int hashMoveOrderingTable[16000000][2]={0};  // must be the same number as above
+const int hashMoveOrderingTableSize= 12700000;  // 8+2=10 Byte per entry
+long long int hashMoveOrderingTable_hash[12700000];    // must be the same number as above
+short int hashMoveOrderingTable_moveID[12700000];      // must be the same number as above
 // first column to store the exact hash, to detect hash collisions
-// second column to store the id of a move:
-// ID: move[0]+move[1]*20 + move[2]*20^2+ ... +move[5]*20^4
+// second column to store the id of a move
+
 
 
 

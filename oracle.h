@@ -28,7 +28,7 @@ void oracle(int board[8][8],unsigned long long int key){
 	int nrBlackQueens=0;
 	int pieceScoreWhite=0;
 	int pieceScoreBlack=0;
-
+	
 	
 	
 	for (int col=0;col<8;col++){
@@ -79,7 +79,7 @@ void oracle(int board[8][8],unsigned long long int key){
 	{5, -5,-10,  0,  0,-10, -5,  5},
 	{5, 10, 10,-20,-20, 10, 10,  5},
 	{0,  0,  0,  0,  0,  0,  0,  0}};
-
+	
 	int pieceSquareTableRook[8][8]={
 	{0,  0,  0,  0,  0,  0,  0,  0},
 	{5, 10, 10, 10, 10, 10, 10,  5},
@@ -162,16 +162,47 @@ void oracle(int board[8][8],unsigned long long int key){
 				if (nrWhiteQueens+nrBlackQueens==0 && pieceScoreWhite-nrWhitePawns <13 && pieceScoreBlack-nrBlackPawns <13){
 					if (piece==-6){ pieceSquareTable[6+piece][i][j] =-pieceSquareTableKingEndgame[j][i]/5;}
 					if (piece== 6){ pieceSquareTable[6+piece][i][j] = pieceSquareTableKingEndgame[7-j][i]/5;}
-				} else {	
+				} else {
 					if (piece==-6){ pieceSquareTable[6+piece][i][j] =-pieceSquareTableKingMiddlegame[j][i]/5;}
 					if (piece== 6){ pieceSquareTable[6+piece][i][j] = pieceSquareTableKingMiddlegame[7-j][i]/5;}
 				}
-				
-				
 			}
 		}
 	}
 	
+	/******************************
+	*** Only one pawn remaining ***
+	******************************/
+
+	
+	if (nrWhitePawns+nrBlackPawns==1){
+		int colPawn;
+		int rowPawn;
+		int colorPawn;
+		for (int col=0;col<8;col++){
+			for (int row=0;row<8;row++){
+				piece=board[col][row];
+				if (abs(piece)==1){
+					colPawn=col;
+					rowPawn=row;
+					colorPawn=piece;
+				}
+			}
+		}
+		
+
+		for (int col=0;col<8;col++){
+			for (int row=0;row<8;row++){
+				if ((row>rowPawn && colorPawn==1) || (row<rowPawn && colorPawn==-1)){ // in front of the pawn
+					pieceSquareTable[6-6][col][row]=-(16-abs(col-colPawn)*2);
+					pieceSquareTable[6+6][col][row]=+(16-abs(col-colPawn)*2);
+				} else {
+					pieceSquareTable[6-6][col][row]=-(16-2*max(abs(col-colPawn),abs(row-rowPawn-colorPawn)));
+					pieceSquareTable[6+6][col][row]=+(16-2*max(abs(col-colPawn),abs(row-rowPawn-colorPawn)));
+				}
+			}
+		}
+	}
 	
 	/****************************
 	*** Move Opponent to edge ***

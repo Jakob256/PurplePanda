@@ -28,9 +28,10 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	********************************************/
 	
 	int turn=-1+2*(key%2);
+	int nrPieces=((key>>9)&63);
 	int startTime=clock();
+	time=time*CLOCKS_PER_SEC/1000;
 	int endTime=startTime+time;
-	float evaluation=0;
 
 	/************************************
 	***** reseting counting numbers *****
@@ -48,27 +49,72 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	oracle(board,key);
 	key=setBonusOfKey(board,key);
 	
+	/****************************************
+	***** prepare/tablebase stuff/abort *****
+	****************************************/
+	
+	// prepare default move:
+	int moveList[250*5];
+	assignMoveListAndSort(board,key,moveList,true);
+	for (int i=0;i<5;i++){
+		rootBestMove[i]=moveList[i+1];
+	}
+	
+	// in case of only one legal move:
+	if (moveList[0]==1){
+		cout << "bestmove ";
+		printMove(rootBestMove[0],rootBestMove[1],rootBestMove[2],rootBestMove[3],rootBestMove[4]);
+		cout << "\n";
+		return;
+	} 
+	
+	// in case we are in the 3men tablebase:
+	if (nrPieces<=3){
+		float bestScore=-INF*turn;
+		float score;
+		unsigned long long int newKeyy;
+		
+		for (int i=1; i<=moveList[0];i++){
+			newKeyy=newKey(board,key,moveList[5*i-4],moveList[5*i-3],moveList[5*i-2],moveList[5*i-1],moveList[5*i-0]);
+			
+			assignMakeMove(board,moveList[5*i-4],moveList[5*i-3],moveList[5*i-2],moveList[5*i-1],moveList[5*i-0]);
+			score=stationaryEval(board,newKeyy);
+			assignUndoMove(board,moveList[5*i-4],moveList[5*i-3],moveList[5*i-2],moveList[5*i-1],moveList[5*i-0]);
+			
+			if (score*turn>bestScore*turn){
+				bestScore=score;
+				rootBestMove[0]=moveList[5*i-4];
+				rootBestMove[1]=moveList[5*i-3];
+				rootBestMove[2]=moveList[5*i-2];
+				rootBestMove[3]=moveList[5*i-1];
+				rootBestMove[4]=moveList[5*i];
+			}
+		}
+		
+		cout << "bestmove ";
+		printMove(rootBestMove[0],rootBestMove[1],rootBestMove[2],rootBestMove[3],rootBestMove[4]);
+		cout << "\n";
+		return;
+	}
+	
+	
 	/*********************************
 	***** start extensive search *****
 	*********************************/
 	
-	int moveList[250*5];
-	assignMoveListAndSort(board,key,moveList,true);
-	for (int i=0;i<5;i++){
-		globalBestMove[i]=moveList[i+1];
-	}
-	
+	int maxDepth;
+	float evaluation;
 	
 	for (int depth2go=2; depth2go<=20; depth2go++){	
 		if (depth2go>inputDepth){break;}
-		globalMaxDepth=8;
-		if (depth2go>=7){globalMaxDepth=depth2go+2;}
+		maxDepth=8;
+		if (depth2go>=7){maxDepth=depth2go+2;}
 		if (clock()<endTime){
-			evaluation=eval(board,key,hashFunction(board,key),0,depth2go,-INF,+INF,endTime);
+			evaluation=eval(board,key,hashFunction(board,key),0,depth2go,-INF,+INF,endTime,maxDepth);
 			if (clock()<endTime){
 				
 				cout << "info depth "<< depth2go<<" score cp " << (int)(evaluation*100*turn) << " nodes "<< countingStationaryEvalCalled<< " pv ";
-				printMove(globalBestMove[0],globalBestMove[1],globalBestMove[2],globalBestMove[3],globalBestMove[4]);
+				printMove(rootBestMove[0],rootBestMove[1],rootBestMove[2],rootBestMove[3],rootBestMove[4]);
 				cout << "\n";
 			}
 		}
@@ -89,7 +135,7 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	
 	
 	cout << "bestmove ";
-	printMove(globalBestMove[0],globalBestMove[1],globalBestMove[2],globalBestMove[3],globalBestMove[4]);
+	printMove(rootBestMove[0],rootBestMove[1],rootBestMove[2],rootBestMove[3],rootBestMove[4]);
 	cout << "\n";
 }	
 

@@ -65,14 +65,18 @@ int main() {
 		std::getline(std::cin, input);
 
 		if (input=="uci"){
-			cout << "id name Purple Panda 13\nid author J. Steininger\nuciok\n";
+			cout << "id name Purple Panda 14\nid author J. Steininger\nuciok\n";
 			
 		} else if (input=="d"){
 			plotBoard(board);
 			printKey(key);
 			oracle(board,key);
 			key=setBonusOfKey(board,key);
-			cout << "Stationary eval: "<< stationaryEval(board,key)<< "\n\n";
+			cout << "Stationary eval: "<< stationaryEval(board,key)<< "\n";
+			int moveList[250*5];
+			assignMoveListAndSort(board,key,moveList,true);
+			cout << "in check: "<< moveList[5*moveList[0]+1]<< "\n";
+			
 			
 		} else if (input=="pst"){
 			oracle(board,key);
@@ -112,6 +116,14 @@ int main() {
 			asd2=clock();
 			cout << "duration: "<<asd2-asd1<< "\n";
 			
+		} else if (input=="switch1"){
+			switch1=!switch1;
+			cout << "switch1: " << switch1 <<"\n";
+			
+		} else if (input=="moveorder"){
+			int moveList[250*5];
+			assignMoveListAndSort(board,key,moveList,true);
+			printMoveList(moveList);
 			
 		} else if (input=="uciready"){
 			cout << "readyok\n";
@@ -135,7 +147,7 @@ int main() {
 			
 			// now check if there are extra moves given
 			if (input.substr(0,23)=="position startpos moves"){
-				 
+				
 				input.append(1,' ');
 		
 				for (int i=23; i<=input.length(); i++){
@@ -154,7 +166,7 @@ int main() {
 								previous100PositionHashes[0]=hashFunction(board,key); // save new Hash position
 								
 								break;
-
+								
 							}
 						}
 					}
@@ -217,13 +229,36 @@ int main() {
 		*** now starting the calculation ***
 		***********************************/
 		
-		} else if (input=="go movetime 10000"){ 	// this is the first Lichess start comand when time is not yet ticking
-			engine(board, key, 500,1000);
+		} else if (input=="go movetime 10000"){ 	// so, the first comand on Lichess is movetime 10000 when your time is not yet ticking
+													// however, I don't want to keep the player waiting for 10 seconds. So I will reduce the
+													// thinking time to 0.5 sek, if it seems that we are communicating with lichess in the starting position.
+			int nrUntouchedSquares=0;
+			for (int col=0;col<8;col++){
+				for (int row=0;row<8;row++){
+					if (resetBoard[col][row]==board[col][row]){
+						nrUntouchedSquares++;
+					}
+				}
+			}
+			if (nrUntouchedSquares>=64-2){
+				engine(board, key, 500,1000);
+			} else {
+				engine(board, key, 10000,1000);
+			}
 			
-		} else if (input.substr(0,11)=="go movetime"){			// this is for arena with constant movetime
+		} else if (input.substr(0,11)=="go movetime"){			// this is for constant movetime
 			millisecondsTime2Think=stoi(input.substr(12,input.length()-12));
-			engine(board, key, millisecondsTime2Think,1000);			
-		
+			// okay... as far as I can tell, Arena does not have the option to set a constant movetime that is not a multiple of one second.
+			// therefore, the millisecond time is always divisible by 1000.
+			// however, I want to allow movetimes less than a second.
+			// so my hack is, if the movetime in milliseconds is of the form 789xxx000, then we only use the xxx milliseconds.
+			
+			if (millisecondsTime2Think-millisecondsTime2Think%1000000==789000000 && millisecondsTime2Think%1000==0){
+				millisecondsTime2Think=(millisecondsTime2Think%1000000)/1000;
+			}
+			
+			engine(board, key, millisecondsTime2Think,1000);
+			
 		} else if (input.substr(0,8)=="go depth"){
 			depth=stoi(input.substr(9,input.length()-9));
 			engine(board, key, 1000000000,depth);			

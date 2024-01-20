@@ -102,7 +102,7 @@ long long int perftBackground(int board[8][8], unsigned long long int key, long 
 	long long int newHashh;
 	
 	
-	assignMoveListAndSort(board,key,moveList,false);
+	assignMoveListAndSort(board,key,moveList,switch1);
 
 	
 	if (depth==1){

@@ -16,6 +16,14 @@ g++ UCI_wrapper.cpp -o PurplePanda.exe -march=native -O3
 Alternatively, find the executables under "Releases". You will have to copy the two provided dll files also to the same location as the engine.
 
 
+## Vesion 14: Score vs V13 58% (Elo +56)
+* improved move ordering; used at every depth
+
+* more aggressive pruning at frontier nodes
+
+* 3men Distance-To-Mate table used by interior node recognizer
+
+
 ## Vesion 13: Score vs V12 61% (Elo +78)
 * beta-cutoffs at frontier nodes
 
