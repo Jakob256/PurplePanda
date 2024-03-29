@@ -46,8 +46,8 @@ int main() {
 	
 	int resetBoard[8][8]={2,1,0,0,0,0,-1,-2,3,1,0,0,0,0,-1,-3,4,1,0,0,0,0,-1,-4,5,1,0,0,0,0,-1,-5,6,1,0,0,0,0,-1,-6,4,1,0,0,0,0,-1,-4,3,1,0,0,0,0,-1,-3,2,1,0,0,0,0,-1,-2};
 	int board[8][8]={2,1,0,0,0,0,-1,-2,3,1,0,0,0,0,-1,-3,4,1,0,0,0,0,-1,-4,5,1,0,0,0,0,-1,-5,6,1,0,0,0,0,-1,-6,4,1,0,0,0,0,-1,-4,3,1,0,0,0,0,-1,-3,2,1,0,0,0,0,-1,-2};
-	unsigned long long int resetKey=0b100000000010000000100000000011111;
-	unsigned long long int key=0b100000000010000000100000000011111;
+	unsigned long long int resetKey=0b1000000000000100000000000001100010000000100000000011111;
+	unsigned long long int key=     0b1000000000000100000000000001100010000000100000000011111;
 	oracle(board,key);
 	
 	///////////////////
@@ -65,7 +65,7 @@ int main() {
 		std::getline(std::cin, input);
 
 		if (input=="uci"){
-			cout << "id name Purple Panda 14\nid author J. Steininger\nuciok\n";
+			cout << "id name Purple Panda 15\nid author J. Steininger\nuciok\n";
 			
 		} else if (input=="d"){
 			plotBoard(board);
@@ -85,7 +85,7 @@ int main() {
 					cout << "Piece: "<<color*piece<<"\n";
 					for (int row=7; row>=0; row--){
 						for (int col=0; col<8; col++){
-							hv=pieceSquareTable[piece*color+6][col][row];
+							hv=PST_mg[piece*color+6][col][row]; // this only shows the middlegame PST
 							if (hv<=-10){cout << hv<< "  ";}
 							else if (hv<0){cout <<" " << hv<< "  ";}
 							else if (hv<10){cout <<"  " << hv<< "  ";}
@@ -186,7 +186,7 @@ int main() {
 			oracle(board,key);
 			key=setBonusOfKey(board,key);
 			
-			movesFound=false;	
+			movesFound=false;
 			for (int i=1; i<input.length()-5; i++){
 				if (input.substr(i,5)=="moves"){
 					movesFound=true;
@@ -345,6 +345,6 @@ int main() {
 		}
 
 	}
-	return 1;
+	return 0;
 }
 

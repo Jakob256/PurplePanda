@@ -42,9 +42,9 @@ long long int perftBackground(int board[8][8], unsigned long long int key, long 
 	}
 	
 	
-	/*******************************************
+	/***************************************
 	**** Debugging/Testing: key (Score) ****
-	*******************************************/
+	***************************************/
 	
 	int score1= scoreFunction(board,key);
 	int score2= int((key>>15)&255)-128;
@@ -59,22 +59,51 @@ long long int perftBackground(int board[8][8], unsigned long long int key, long 
 	}
 	
 	
-	/************************************************
-	**** Debugging/Testing: key (bonus from PST) ****
-	************************************************/
+	/*******************************************
+	**** Debugging/Testing: key (gamePhase) ****
+	*******************************************/
 	
+	int gamePhase1= gamePhaseFunction(board,key);
+	int gamePhase2= int((key>>23)&63);
 	
-	int bonus1=bonusFunction(board,key);
-	int bonus2=(int((key>>23)&1023)-512);
-	if (bonus1 != bonus2){
-		cout << "bonus calculated is wrong\n";
-		cout << "according to calculation: " << bonus1<< "\n";
-		cout << "according to updated key: " << bonus2 << "\n";
+	if (gamePhase1 != gamePhase2){
+		cout << "gamePhase calculated is wrong\n";
+		cout << "according to calculation: " << gamePhase1<< "\n";
+		cout << "according to updated key: " << gamePhase2 << "\n";
 		plotBoard(board);
 		printKey(key);
 		cout << "\n\n";
 	}
 	
+	
+	
+	/***************************************************
+	**** Debugging/Testing: key (PieceSquareTables) ****
+	***************************************************/
+	
+	
+	int PSTMiddlegame1=PSTMiddlegameFunction(board,key);
+	int PSTMiddlegame2=int((key>>29)&8191)-4096;
+	if (PSTMiddlegame1 != PSTMiddlegame2){
+		cout << "PSTMiddlegame calculated is wrong\n";
+		cout << "according to calculation: " << PSTMiddlegame1<< "\n";
+		cout << "according to updated key: " << PSTMiddlegame2 << "\n";
+		plotBoard(board);
+		printKey(key);
+		cout << "\n\n";
+	}
+	
+
+	int PSTEndgame1=PSTEndgameFunction(board,key);
+	int PSTEndgame2=int((key>>42)&8191)-4096;
+	if (PSTEndgame1 != PSTEndgame2){
+		cout << "PSTEndgame calculated is wrong\n";
+		cout << "according to calculation: " << PSTEndgame1<< "\n";
+		cout << "according to updated key: " << PSTEndgame2 << "\n";
+		plotBoard(board);
+		printKey(key);
+		cout << "\n\n";
+	}
 
 	/****************************************
 	**** Debugging/Testing: HashFunction ****

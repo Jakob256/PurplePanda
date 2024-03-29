@@ -544,8 +544,8 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 		quickEvals[i]=endPieceValue                                                               // bonus for capturing a piece
 					-startPieceValue*(isAttacked[moveList[5*i-2]][moveList[5*i-1]])               // bonus if the square we are moving to is not attacked
 					+3*(startPieceValue>=6)*isAttacked[moveList[5*i-4]][moveList[5*i-3]]          // bonus if we move a queen or a rook and the startsquare was attacked
-					+(pieceSquareTable[6+startpiece][moveList[5*i-4]][moveList[5*i-3]]*turn <  
-					pieceSquareTable[6+startpiece][moveList[5*i-2]][moveList[5*i-1]]*turn)        // minimal bonus if moving to a better PST square
+					+(PST_average[6+startpiece][moveList[5*i-4]][moveList[5*i-3]]*turn <  
+					PST_average[6+startpiece][moveList[5*i-2]][moveList[5*i-1]]*turn)        // minimal bonus if moving to a better PST square
 					+10;                                                             	          // offset: now takes values from 0-10+0+0+10=0 to 10-0+3+1+10=24
 
 		

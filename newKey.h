@@ -74,16 +74,16 @@ unsigned long long int newKey (int board[8][8],unsigned long long int key, int c
 		newKeyy-=512;
 	}
 	
-	/*****************************
-	**** calculate evaluation ****
-	*****************************/
+	/*******************************************
+	**** calculate evaluation and gamePhase ****
+	*******************************************/
 
 	if (board[c2][r2]!=0){ // a piece was on the endsquare
 		if (abs(board[c2][r2])==1){newKeyy-=32768*board[c2][r2]/1*1;}
-		if (abs(board[c2][r2])==2){newKeyy-=32768*board[c2][r2]/2*5;}
-		if (abs(board[c2][r2])==3){newKeyy-=32768*board[c2][r2]/3*3;}
-		if (abs(board[c2][r2])==4){newKeyy-=32768*board[c2][r2]/4*3;}
-		if (abs(board[c2][r2])==5){newKeyy-=32768*board[c2][r2]/5*9;}
+		if (abs(board[c2][r2])==2){newKeyy-=32768*board[c2][r2]/2*5;newKeyy-=2*8388608;}
+		if (abs(board[c2][r2])==3){newKeyy-=32768*board[c2][r2]/3*3;newKeyy-=1*8388608;}
+		if (abs(board[c2][r2])==4){newKeyy-=32768*board[c2][r2]/4*3;newKeyy-=1*8388608;}
+		if (abs(board[c2][r2])==5){newKeyy-=32768*board[c2][r2]/5*9;newKeyy-=4*8388608;}
 		if (abs(board[c2][r2])==6){newKeyy-=32768*board[c2][r2]/6*20;} // this is close to the maximal value, to ensure fitting in a signed 256 number
 	}
 	
@@ -93,35 +93,49 @@ unsigned long long int newKey (int board[8][8],unsigned long long int key, int c
 	
 	// check promoted piece
 	if (adInfo>7 && adInfo!=128){
-		if (adInfo/16==2){newKeyy+=32768*board[c1][r1]*(5-1);}
-		if (adInfo/16==3){newKeyy+=32768*board[c1][r1]*(3-1);}
-		if (adInfo/16==4){newKeyy+=32768*board[c1][r1]*(3-1);}
-		if (adInfo/16==5){newKeyy+=32768*board[c1][r1]*(9-1);}
+		if (adInfo/16==2){newKeyy+=32768*board[c1][r1]*(5-1);newKeyy+=2*8388608;}
+		if (adInfo/16==3){newKeyy+=32768*board[c1][r1]*(3-1);newKeyy+=1*8388608;}
+		if (adInfo/16==4){newKeyy+=32768*board[c1][r1]*(3-1);newKeyy+=1*8388608;}
+		if (adInfo/16==5){newKeyy+=32768*board[c1][r1]*(9-1);newKeyy+=4*8388608;}
 	}
 	
 	
-	/*******************************************
-	**** calculate Piece Square Table Bonus ****
-	*******************************************/
+	
+	/******************************
+	**** calculate PST updates ****
+	******************************/
 	
 	
-	unsigned long long int hugeNumber=8388608;  //=2^23
-	long long int a=pieceSquareTable[6+board[c1][r1]][c1][r1]*hugeNumber;
-	long long int b=pieceSquareTable[6+board[c2][r2]][c2][r2]*hugeNumber;
-	long long int c=pieceSquareTable[6+board[c1][r1]][c2][r2]*hugeNumber;
-	newKeyy -= a;  // that start piece is no longer where it was there
-	newKeyy -= b;  // that target square is for a moment empty
-	newKeyy += c;  // that target square is now the start piece
+	unsigned long long int hugeMgNumber=536870912;  //2^29
+	unsigned long long int hugeEgNumber=4398046511104;  //2^42
+	long long int a_mg=PST_mg[6+board[c1][r1]][c1][r1]*hugeMgNumber;
+	long long int b_mg=PST_mg[6+board[c2][r2]][c2][r2]*hugeMgNumber;
+	long long int c_mg=PST_mg[6+board[c1][r1]][c2][r2]*hugeMgNumber;
+	newKeyy -= a_mg;  // that start piece is no longer where it was there
+	newKeyy -= b_mg;  // that target square is for a moment empty
+	newKeyy += c_mg;  // that target square is now the start piece
+	
+	long long int a_eg=PST_eg[6+board[c1][r1]][c1][r1]*hugeEgNumber;
+	long long int b_eg=PST_eg[6+board[c2][r2]][c2][r2]*hugeEgNumber;
+	long long int c_eg=PST_eg[6+board[c1][r1]][c2][r2]*hugeEgNumber;
+	newKeyy -= a_eg;  // that start piece is no longer where it was there
+	newKeyy -= b_eg;  // that target square is for a moment empty
+	newKeyy += c_eg;  // that target square is now the start piece
 	
 	/***********************
 	**** PST: casteling ****
 	***********************/
 	
 	if (abs(c1-c2)==2 && abs(board[c1][r1])==6){ // casteling: need to update Rook position
-		a=pieceSquareTable[6+board[c1][r1]/3][((c2-2)/4)*7][r1]*hugeNumber;  // column 6->column 7; column 2 -> column 0
-		b=pieceSquareTable[6+board[c1][r1]/3][c2/2+2      ][r1]*hugeNumber;  // column 6->column 5; column 2 -> column 3
-		newKeyy -= a;  // that rook is removed
-		newKeyy += b;  // that rook is added
+		a_mg=PST_mg[6+board[c1][r1]/3][((c2-2)/4)*7][r1]*hugeMgNumber;  // column 6->column 7; column 2 -> column 0
+		b_mg=PST_mg[6+board[c1][r1]/3][c2/2+2      ][r1]*hugeMgNumber;  // column 6->column 5; column 2 -> column 3
+		newKeyy -= a_mg;  // that rook is removed
+		newKeyy += b_mg;  // that rook is added
+		
+		a_eg=PST_eg[6+board[c1][r1]/3][((c2-2)/4)*7][r1]*hugeEgNumber;  // column 6->column 7; column 2 -> column 0
+		b_eg=PST_eg[6+board[c1][r1]/3][c2/2+2      ][r1]*hugeEgNumber;  // column 6->column 5; column 2 -> column 3
+		newKeyy -= a_eg;  // that rook is removed
+		newKeyy += b_eg;  // that rook is added
 	}
 	
 	/***********************
@@ -129,26 +143,35 @@ unsigned long long int newKey (int board[8][8],unsigned long long int key, int c
 	***********************/
 	
 	if (adInfo==128){
-		a=pieceSquareTable[6-board[c1][r1]][c2][r1]*hugeNumber;
-		newKeyy -= a;  // that pawn is removed
+		a_mg=PST_mg[6-board[c1][r1]][c2][r1]*hugeMgNumber;
+		newKeyy -= a_mg;  // that pawn is removed
+		
+		a_eg=PST_eg[6-board[c1][r1]][c2][r1]*hugeEgNumber;
+		newKeyy -= a_eg;  // that pawn is removed
 	}
 
 	/***********************
 	**** PST: promotion ****
 	***********************/
+	
 	if (adInfo>=16 && adInfo !=128){
-		a=pieceSquareTable[6+board[c1][r1]][c2][r2]*hugeNumber;
-		b=pieceSquareTable[6+board[c1][r1]*adInfo/16][c2][r2]*hugeNumber;
-		newKeyy -= a;
-		newKeyy += b;
+		a_mg=PST_mg[6+board[c1][r1]][c2][r2]*hugeMgNumber;
+		b_mg=PST_mg[6+board[c1][r1]*adInfo/16][c2][r2]*hugeMgNumber;
+		newKeyy -= a_mg;
+		newKeyy += b_mg;
+		
+		a_eg=PST_eg[6+board[c1][r1]][c2][r2]*hugeEgNumber;
+		b_eg=PST_eg[6+board[c1][r1]*adInfo/16][c2][r2]*hugeEgNumber;
+		newKeyy -= a_eg;
+		newKeyy += b_eg;
 	}
 	
 	
 	
-	
-	if (newKeyy > 1125899906842624){
-		cout << "onoooo\n";
-	}
+	// this will have to be fixed!!!
+	//if (newKeyy > 1125899906842624){
+	//	cout << "onoooo\n";
+	//}
 	
 	return newKeyy;
 }

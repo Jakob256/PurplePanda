@@ -16,18 +16,25 @@
 ***************/
 
 unsigned long long int setBonusOfKey(int board[8][8],unsigned long long int key){
-	int bonus=bonusFunction(board,key);
+	int gamePhase=gamePhaseFunction(board,key);
+	int PSTMiddlegame=PSTMiddlegameFunction(board,key)+4096;
+	int PSTEndgame=PSTEndgameFunction(board,key)+4096;
 	
+	unsigned long long int PSTMiddlegame_=PSTMiddlegame;
+	unsigned long long int PSTEndgame_=PSTEndgame;
 
-	// adding bonus 2 key ==== this part is long because of type conversion issues
-	unsigned long long int mask=0b111111111100000000000000000000000;
-	key=key & (key^mask); // delets bonus bits 
-	bonus=bonus+512;
-	unsigned long long int bonus2add= bonus;
-	bonus2add=bonus2add*8388608;
+	// we will keep the key intact and only change the gamePhase, PSTMiddlegame PSTEndgame.
+	// the "eval" is already handled by "fen2key.h". This is not very consistent and should probably be changed
+	
+	unsigned long long int deleteMask=0b11111111111111111111111111111111111111100000000000000000000000;
+	key=key & (key^deleteMask); // delets bits 
 	
 	
-	key=key+ bonus2add;
+	
+	
+	key+= gamePhase*8388608;
+	key+= PSTMiddlegame_*536870912;  //2^29
+	key+= PSTEndgame_*4398046511104; //2^42
 	
 	
 	return key;

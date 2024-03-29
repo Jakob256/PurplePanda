@@ -17,15 +17,17 @@
 
 float stationaryEval(int board[8][8],unsigned long long int key){
 	
-	/******************
-	** initial stuff **
-	******************/
+	/***********************************
+	** unpacking information from key **
+	***********************************/
 	
 	countingStationaryEvalCalled++;
 	float eval=int((key>>15)&255)-128;
 	int turn=-1+2*(key%2);
 	int nrPieces=((key>>9)&63);
-	int bonus=(int((key>>23)&1023)-512);
+	int phase24=int((key>>23)&63);
+	int PST_mg_score=int((key>>29)&8191)-4096;
+	int PST_eg_score=int((key>>42)&8191)-4096;
 	int tb_result;
 	
 	/******************
@@ -41,8 +43,8 @@ float stationaryEval(int board[8][8],unsigned long long int key){
 		return turn*tb_result;
 	}
 	
-	eval+=bonus/100.;
 	
+	eval+=PST_mg_score/100.*(phase24/24.)+PST_eg_score/100.*(1-phase24/24.);
 	
 	/************************
 	** wanting kings close **

@@ -16,7 +16,13 @@ g++ UCI_wrapper.cpp -o PurplePanda.exe -march=native -O3
 Alternatively, find the executables under "Releases". You will have to copy the two provided dll files also to the same location as the engine.
 
 
-## Vesion 14: Score vs V13 58% (Elo +56)
+## Version 15: Score vs V14 62% (Elo +85)
+* Tapered evaluation
+
+* Tuning of Piece-Square Tables for middle- and endgame using Texel's tuning method on games from [lichess.org](https://lichess.org/)
+
+
+## Version 14: Score vs V13 58% (Elo +56)
 * improved move ordering; used at every depth
 
 * more aggressive pruning at frontier nodes
@@ -24,19 +30,19 @@ Alternatively, find the executables under "Releases". You will have to copy the 
 * 3men Distance-To-Mate table used by interior node recognizer
 
 
-## Vesion 13: Score vs V12 61% (Elo +78)
+## Version 13: Score vs V12 61% (Elo +78)
 * beta-cutoffs at frontier nodes
 
 * tuning of a search parameters
 
 
-## Vesion 12: Score vs V11 58% (Elo +56)
+## Version 12: Score vs V11 58% (Elo +56)
 * improved move generator: calculation of all attacked squares and pinned pieces; small speed improvement
 
 * sorting moves incorporated into the move generation; active at depth <=5
 
 
-## Vesion 11: Score vs V10 63% (Elo +92)
+## Version 11: Score vs V10 63% (Elo +92)
 * true iterative deepening: hash lookup for previous best moves at depth <=5
 
 * iterative hash updates
@@ -46,7 +52,7 @@ Alternatively, find the executables under "Releases". You will have to copy the 
 * bug test introduced with perft
 
 
-## Vesion 10 (first public version): Score vs V9 72% (Elo +164)
+## Version 10 (first public version): Score vs V9 72% (Elo +164)
 * added basic Piece-Square Tables for middle- and endgame.
 
 * Piece-Square Table evaluations are updated iteratively

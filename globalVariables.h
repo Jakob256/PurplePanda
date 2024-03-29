@@ -25,7 +25,10 @@ const float INF=10000000.*10000000000.*1000000000.*10000000000.;
 
 int randomness=1;
 int moveOpponentToEdge;
-long long int pieceSquareTable[6+1+6][8][8]={0};  // long long necessary to add it to newKeyy
+//long long int pieceSquareTable[6+1+6][8][8]={0};  // long long necessary to add it to newKeyy
+long long int PST_mg[6+1+6][8][8]={0};  // long long necessary to add it to newKeyy
+long long int PST_eg[6+1+6][8][8]={0};  // long long necessary to add it to newKeyy
+int PST_average[6+1+6][8][8]={0};  // only used for moveordering
 
 /**************************
 *** for move generation ***
