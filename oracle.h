@@ -56,18 +56,6 @@ void oracle(int board[8][8],unsigned long long int key){
 	
 	
 	
-	/******************************
-	** Force someone to the edge **
-	******************************/
-	
-	moveOpponentToEdge=0;
-	if (nrWhitePawns+nrBlackPawns==0){ // this could be further extended...
-		if (pieceScoreWhite>pieceScoreBlack){moveOpponentToEdge=1;}
-		if (pieceScoreWhite<pieceScoreBlack){moveOpponentToEdge=-1;}
-	}
-
-	
-	
 	/********************
 	** PST from Tuning **
 	********************/
@@ -91,7 +79,7 @@ void oracle(int board[8][8],unsigned long long int key){
 	{-69,-45,-75,-54,-39,-33,-15, -6},
 	{-78,-72,-90,-57,-51,-51,  9,-51},
 	{-75,-81,-63,-75,-60,-45,-21,-90},
-	{-69,-60,-36,-45,-39,-51,-21,-69}};
+	{-69,-60,-36,-45,-39,-51,-60,-69}};
 
 
 	int PST_Knight_mg[8][8]={
@@ -294,29 +282,6 @@ void oracle(int board[8][8],unsigned long long int key){
 	
 	*/
 	
-	/****************************
-	*** Move Opponent to edge ***
-	****************************/
-	
-	// if wants to force king to the edge, loosing King wants to stay in the middle
-	
-	/*
-	if (moveOpponentToEdge!=0){
-		for (int col=0; col<8;col++){
-			for (int row=0; row<8;row++){
-				for (int piece=-6; piece < 7; piece++){
-					
-					if (piece==-6*moveOpponentToEdge){ // opponents king; measure distance to center
-						pieceSquareTable[6+piece][col][row]= moveOpponentToEdge*(abs(col-3.5)+abs(row-3.5))*20;// measured in 1/100
-					} else {
-						pieceSquareTable[6+piece][col][row]=0;
-					}
-					
-				}
-			}
-		}
-	}
-	*/
 	
 	
 	return;

@@ -65,7 +65,7 @@ int main() {
 		std::getline(std::cin, input);
 
 		if (input=="uci"){
-			cout << "id name Purple Panda 15\nid author J. Steininger\nuciok\n";
+			cout << "id name Purple Panda 16\nid author J. Steininger\nuciok\n";
 			
 		} else if (input=="d"){
 			plotBoard(board);

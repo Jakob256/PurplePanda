@@ -58,7 +58,7 @@ float eval(int board[8][8],unsigned long long int key, long long int hash, int a
 	// but maybe, we should at least check that we are not in check, otherwise there might be stupid consequences... so:
 	
 	float standingPat;
-	if ((depth2Go==1) && (atDepth>=6) && (moveOpponentToEdge==0)){
+	if ((depth2Go==1) && (atDepth>=6)){
 		standingPat=stationaryEval(board,key);
 		if ((turn==+1 && standingPat>= beta)||(turn==-1 && standingPat<= alpha)){
 			if (isKingInCheck(board,turn,0,0)==0){
