@@ -2,9 +2,7 @@
 *** function depends on ***
 **************************/
 
-#include "isKingInCheck.h"
-#include "assignMakeMove.h"
-#include "assignUndoMove.h"
+//nothing
 
 /************
 *** Guard ***
@@ -20,7 +18,15 @@
 
 // has to applied to the board before making the move on the board
 
-unsigned long long int newKey (int board[8][8],unsigned long long int key, int c1, int r1, int c2, int r2, int adInfo){
+
+unsigned long long int newKey (int board[8][8],unsigned long long int key, unsigned int move){
+	short int c1=move&0b111;
+	short int r1=(move>>3)&0b111;
+	short int c2=(move>>6)&0b111;
+	short int r2=(move>>9)&0b111;
+	short int absPromotedTo=(move>>12)&0b111;
+	//short int absCaptured=(move>>15)&0b111;
+	bool enPassant =(move>>18)&0b1;
 	
 	unsigned long long int newKeyy;
 	
@@ -35,7 +41,7 @@ unsigned long long int newKey (int board[8][8],unsigned long long int key, int c
 	**** calculate casteling rights ****
 	***********************************/
 	
-	if ((key>>1)&15){   // this might be a source of error...
+	if ((key>>1)&15){
 		if (c1==4&&r1==0){newKeyy=newKeyy&(newKeyy^(2+4));}
 		if (c2==4&&r2==0){newKeyy=newKeyy&(newKeyy^(2+4));}
 		if (c1==0&&r1==0){newKeyy=newKeyy&(newKeyy^(4));}
@@ -52,7 +58,7 @@ unsigned long long int newKey (int board[8][8],unsigned long long int key, int c
 	}
 	
 	/*****************************
-	**** calculate en pessant ****
+	**** calculate en passant ****
 	*****************************/
 	
 	
@@ -60,7 +66,7 @@ unsigned long long int newKey (int board[8][8],unsigned long long int key, int c
 		newKeyy=newKeyy|32; // set the flag bit
 		newKeyy=newKeyy&(newKeyy^(64+128+256)); // set the column bits to 0
 		newKeyy=newKeyy|(c1<<6); // set the column bits to the right column
-	} else { // need to delete potential en pessant marked columns
+	} else { // need to delete potential en passant marked columns
 		newKeyy=newKeyy&(newKeyy^(32)); // set the flag bit
 	}
 		
@@ -70,7 +76,7 @@ unsigned long long int newKey (int board[8][8],unsigned long long int key, int c
 	
 	if (board[c2][r2]!=0){ // a piece was on the endsquare
 		newKeyy-=512; //directly effect the corresponding bits
-	} else if (adInfo==128){ // this is an en pessant capture
+	} else if (enPassant){ // this is an en passant capture
 		newKeyy-=512;
 	}
 	
@@ -87,16 +93,16 @@ unsigned long long int newKey (int board[8][8],unsigned long long int key, int c
 		if (abs(board[c2][r2])==6){newKeyy-=32768*board[c2][r2]/6*20;} // this is close to the maximal value, to ensure fitting in a signed 256 number
 	}
 	
-	if (adInfo==128){ // this is an en pessant capture
+	if (enPassant){ // this is an en passant capture
 		newKeyy+=32768*board[c1][r1];
 	}
 	
 	// check promoted piece
-	if (adInfo>7 && adInfo!=128){
-		if (adInfo/16==2){newKeyy+=32768*board[c1][r1]*(5-1);newKeyy+=2*8388608;}
-		if (adInfo/16==3){newKeyy+=32768*board[c1][r1]*(3-1);newKeyy+=1*8388608;}
-		if (adInfo/16==4){newKeyy+=32768*board[c1][r1]*(3-1);newKeyy+=1*8388608;}
-		if (adInfo/16==5){newKeyy+=32768*board[c1][r1]*(9-1);newKeyy+=4*8388608;}
+	if (absPromotedTo!=0){
+		if (absPromotedTo==2){newKeyy+=32768*board[c1][r1]*(5-1);newKeyy+=2*8388608;}
+		if (absPromotedTo==3){newKeyy+=32768*board[c1][r1]*(3-1);newKeyy+=1*8388608;}
+		if (absPromotedTo==4){newKeyy+=32768*board[c1][r1]*(3-1);newKeyy+=1*8388608;}
+		if (absPromotedTo==5){newKeyy+=32768*board[c1][r1]*(9-1);newKeyy+=4*8388608;}
 	}
 	
 	
@@ -139,10 +145,10 @@ unsigned long long int newKey (int board[8][8],unsigned long long int key, int c
 	}
 	
 	/***********************
-	**** PST: enpessant ****
+	**** PST: enpassant ****
 	***********************/
 	
-	if (adInfo==128){
+	if (enPassant){
 		a_mg=PST_mg[6-board[c1][r1]][c2][r1]*hugeMgNumber;
 		newKeyy -= a_mg;  // that pawn is removed
 		
@@ -154,24 +160,18 @@ unsigned long long int newKey (int board[8][8],unsigned long long int key, int c
 	**** PST: promotion ****
 	***********************/
 	
-	if (adInfo>=16 && adInfo !=128){
+	if (absPromotedTo!=0){
 		a_mg=PST_mg[6+board[c1][r1]][c2][r2]*hugeMgNumber;
-		b_mg=PST_mg[6+board[c1][r1]*adInfo/16][c2][r2]*hugeMgNumber;
+		b_mg=PST_mg[6+board[c1][r1]*absPromotedTo][c2][r2]*hugeMgNumber;
 		newKeyy -= a_mg;
 		newKeyy += b_mg;
 		
 		a_eg=PST_eg[6+board[c1][r1]][c2][r2]*hugeEgNumber;
-		b_eg=PST_eg[6+board[c1][r1]*adInfo/16][c2][r2]*hugeEgNumber;
+		b_eg=PST_eg[6+board[c1][r1]*absPromotedTo][c2][r2]*hugeEgNumber;
 		newKeyy -= a_eg;
 		newKeyy += b_eg;
 	}
 	
-	
-	
-	// this will have to be fixed!!!
-	//if (newKeyy > 1125899906842624){
-	//	cout << "onoooo\n";
-	//}
 	
 	return newKeyy;
 }

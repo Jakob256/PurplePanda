@@ -8,8 +8,7 @@
 #include "positionFeatures.h"
 #include "assignMakeMove.h"
 #include "assignUndoMove.h"
-#include "printMoves.h"
-#include "printKey.h"
+#include "printingStuff.h"
 
 
 /************
@@ -124,14 +123,14 @@ long long int perftBackground(int board[8][8], unsigned long long int key, long 
 	*********************/
 	
 	
-	int moveList[250*5];
+	unsigned int moveList[250];
 	long long int count;
 	long long int positions=0;
 	unsigned long long int newKeyy;
 	long long int newHashh;
 	
 	
-	assignMoveListAndSort(board,key,moveList,switch1);
+	assignMoveListAndSort(board,key,moveList,false);
 
 	
 	if (depth==1){
@@ -140,21 +139,20 @@ long long int perftBackground(int board[8][8], unsigned long long int key, long 
 	
 	
 	for (int i=1; i<=moveList[0];i++){
-		newKeyy=newKey(board,key,moveList[i*5-4],moveList[i*5-3],moveList[i*5-2],moveList[i*5-1],moveList[i*5]);
-		newHashh=newHash(board,key,hash,moveList[i*5-4],moveList[i*5-3],moveList[i*5-2],moveList[i*5-1],moveList[i*5]);
+		newKeyy=newKey(board,key,moveList[i]);
+		newHashh=newHash(board,key,hash,moveList[i]);
 		
-		assignMakeMove(board,moveList[i*5-4],moveList[i*5-3],moveList[i*5-2],moveList[i*5-1],moveList[i*5]);
+		assignMakeMove(board,moveList[i]);
 		
 		count=perftBackground(board,newKeyy,newHashh,depth-1,atDepth+1);
 		positions+=count;
 		if (atDepth==0){
-			//cout << "\n\n\n";
-			printMove(moveList[i*5-4],moveList[i*5-3],moveList[i*5-2],moveList[i*5-1],moveList[i*5]);
+			printMove(moveList[i]);
 			cout <<": "<<count<<"\n";
-			//plotBoard(board);
 		}
 		
-		assignUndoMove(board,moveList[i*5-4],moveList[i*5-3],moveList[i*5-2],moveList[i*5-1],moveList[i*5]);
+		assignUndoMove(board,moveList[i]);
+		
 	}
 	return positions;
 }
@@ -169,7 +167,6 @@ void perft(int board[8][8], unsigned long long int key, int depth){
 	
 	cout << "\nNodes: "<<count<<"\n";
 	cout << "perft duration: "<<asd2-asd1<< "\n";
-	
 }
 
 #endif

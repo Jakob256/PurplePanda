@@ -21,7 +21,7 @@ float stationaryEval(int board[8][8],unsigned long long int key){
 	** unpacking information from key **
 	***********************************/
 	
-	countingStationaryEvalCalled++;
+	staticeval++;
 	float eval=int((key>>15)&255)-128;
 	int turn=-1+2*(key%2);
 	int nrPieces=((key>>9)&63);

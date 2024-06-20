@@ -5,7 +5,7 @@
 #include "isKingInCheck.h"
 #include "assignMakeMove.h"
 #include "assignUndoMove.h"
-#include "printMoves.h"
+#include "printingStuff.h"
 
 /************
 *** Guard ***
@@ -18,16 +18,34 @@
 *** Let's go ***
 ***************/
 
+// there are 4 directions: N,E, NW, NW in that order. Here in the list are the pieces marked that can go that way (i.e. rook, rook, bishop, bishop)
+const int moveGenerationHelper[4]={2,2,4,4};
+// directions in that order N,S,E,W,NW,SE,NE,SW,8 knight directions
+const int dx_LIST[16]={ 0, 0, 1,-1,-1, 1, 1,-1,-2,-2,-1,-1,+1,+1,+2,+2};
+const int dy_LIST[16]={ 1,-1, 0, 0, 1,-1, 1,-1,-1,+1,-2,+2,-2,+2,-1,+1};
 
-void assignMoveListAndSort (int board[8][8],unsigned long long int key, int moveList[], bool sortMoves){	// we use the 5 integer notation:
-	// 1. column of start square
-	// 2. row of start square
-	// 3. column of end square
-	// 4. row of end square
-	// 5. abs(capturedPiece) + 16*abs(promotedTo)
-	//    OR simply 128 if en passant
+
+
+void assignMoveListAndSort (int board[8][8],unsigned long long int key, unsigned int moveList[], int sortMoves, unsigned short int thisMoveFirst=0){
+	// The heart of any chess engine!
 	
-	countingMoveGenerationCalled++;
+	// all legal moves are assigned to "moveList"
+	// a move is stored as a 32-bit number, where only the last 19 bits are used
+	// it is of the form 7.666.555.444.333.222.111
+	
+	// 111: start column
+	// 222: start row
+	// 333: end column
+	// 444: end row
+	// 555: abs(promotedTo)
+	// 666: abs(capturedPiece)
+	// 7: is en passant
+	
+	// this way is chosen, because for a fixed position the rightmost 16 bits of the moves are unique
+	// hence 2 Byte suffice to identify any move in a given position
+	
+	
+	movegen++;
 	int turn=int(-1+2*(key%2));
 	int found=0;
 	int piece,dx,dy,targetRow,targetCol,startpiece,endpiece,dir,piecesFoundInThatDirection,currentlyInCheck;
@@ -53,9 +71,11 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 	**********************************************/
 	
 	bool isAttacked[8][8];
+	bool isPawnAttacked[8][8];
 	for (int col=0;col<8;col++){
 		for (int row=0;row<8;row++){
 			isAttacked[col][row]=false;
+			isPawnAttacked[col][row]=false;
 		}
 	}
 	
@@ -128,10 +148,12 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 			
 			if (abs(piece)==1){// pawn
 				if (col>=1){
-					isAttacked[col-1][row-turn]=true;					
+					isAttacked[col-1][row-turn]=true;
+					isPawnAttacked[col-1][row-turn]=true;
 				}
 				if (col<=6){
 					isAttacked[col+1][row-turn]=true;					
+					isPawnAttacked[col+1][row-turn]=true;
 				}
 			}
 			
@@ -160,7 +182,7 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 	*********************************/
 	
 	// note: also marks the direction; also marks pieces of the opponent that are pinned to my king (important for en passant validation)
-	int pinnedDirections[8][8]{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
+	int pinnedDirections[8][8]={-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 	//direction 0=N
 	//direction 1=E
 	//direction 2=NW
@@ -217,14 +239,14 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 			if (piece*turn<=0){continue;} // there is indeed a piece of the right color here
 			
 			if (abs(piece)==3 && pinnedDirections[col][row]==-1){// knight
-				targetRow=row-2;targetCol=col-1;endpiece=board[targetCol][targetRow]; if (targetRow >=0 && targetCol >=0 && piece*endpiece<=0){	moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=abs(endpiece);found++;}
-				targetRow=row-2;targetCol=col+1;endpiece=board[targetCol][targetRow]; if (targetRow >=0 && targetCol <=7 && piece*endpiece<=0){	moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=abs(endpiece);found++;}
-				targetRow=row-1;targetCol=col-2;endpiece=board[targetCol][targetRow]; if (targetRow >=0 && targetCol >=0 && piece*endpiece<=0){	moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=abs(endpiece);found++;}
-				targetRow=row-1;targetCol=col+2;endpiece=board[targetCol][targetRow]; if (targetRow >=0 && targetCol <=7 && piece*endpiece<=0){	moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=abs(endpiece);found++;}
-				targetRow=row+1;targetCol=col-2;endpiece=board[targetCol][targetRow]; if (targetRow <=7 && targetCol >=0 && piece*endpiece<=0){	moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=abs(endpiece);found++;}
-				targetRow=row+1;targetCol=col+2;endpiece=board[targetCol][targetRow]; if (targetRow <=7 && targetCol <=7 && piece*endpiece<=0){	moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=abs(endpiece);found++;}
-				targetRow=row+2;targetCol=col-1;endpiece=board[targetCol][targetRow]; if (targetRow <=7 && targetCol >=0 && piece*endpiece<=0){	moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=abs(endpiece);found++;}
-				targetRow=row+2;targetCol=col+1;endpiece=board[targetCol][targetRow]; if (targetRow <=7 && targetCol <=7 && piece*endpiece<=0){	moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=abs(endpiece);found++;}
+				targetRow=row-2;targetCol=col-1;endpiece=board[targetCol][targetRow]; if (targetRow >=0 && targetCol >=0 && piece*endpiece<=0){	moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}
+				targetRow=row-2;targetCol=col+1;endpiece=board[targetCol][targetRow]; if (targetRow >=0 && targetCol <=7 && piece*endpiece<=0){	moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}
+				targetRow=row-1;targetCol=col-2;endpiece=board[targetCol][targetRow]; if (targetRow >=0 && targetCol >=0 && piece*endpiece<=0){	moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}
+				targetRow=row-1;targetCol=col+2;endpiece=board[targetCol][targetRow]; if (targetRow >=0 && targetCol <=7 && piece*endpiece<=0){	moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}
+				targetRow=row+1;targetCol=col-2;endpiece=board[targetCol][targetRow]; if (targetRow <=7 && targetCol >=0 && piece*endpiece<=0){	moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}
+				targetRow=row+1;targetCol=col+2;endpiece=board[targetCol][targetRow]; if (targetRow <=7 && targetCol <=7 && piece*endpiece<=0){	moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}
+				targetRow=row+2;targetCol=col-1;endpiece=board[targetCol][targetRow]; if (targetRow <=7 && targetCol >=0 && piece*endpiece<=0){	moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}
+				targetRow=row+2;targetCol=col+1;endpiece=board[targetCol][targetRow]; if (targetRow <=7 && targetCol <=7 && piece*endpiece<=0){	moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}
 			}
 			
 			
@@ -242,8 +264,8 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 					for (int j=1; j<8; j++){
 						targetRow=row+dy*j;targetCol=col+dx*j;endpiece=board[targetCol][targetRow]; 
 						if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7){ // target square on board
-							if (endpiece==0){moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=0;found++;}
-							if (piece*endpiece<0){moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;;moveList[5*found+5]=abs(endpiece);found++;break;}
+							if (endpiece==0){moveList[found+1]=col+row*8+targetCol*64+targetRow*512;found++;}
+							if (piece*endpiece<0){moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;break;}
 							if (piece*endpiece>0){break;}
 						} else {
 							break;
@@ -263,8 +285,8 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 					for (int j=1; j<8; j++){
 						targetRow=row+dy*j;targetCol=col+dx*j;endpiece=board[targetCol][targetRow]; 
 						if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7){ // target square on board
-							if (endpiece==0){moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=0;found++;}
-							if (piece*endpiece<0){moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=abs(endpiece);found++;break;}
+							if (endpiece==0){moveList[found+1]=col+row*8+targetCol*64+targetRow*512;found++;}
+							if (piece*endpiece<0){moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;break;}
 							if (piece*endpiece>0){break;}
 						} else {
 							break;
@@ -277,21 +299,21 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 				if (board[col][row+turn]==0 && (pinnedDirections[col][row]==-1 || pinnedDirections[col][row]==0)){ //1 move push is possible and not pinned
 				
 					if (row+turn==0 || row+turn==7){// this move is a promotion
-						moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=col;moveList[5*found+4]=row+turn;moveList[5*found+5]=16*5;found++;
-						moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=col;moveList[5*found+4]=row+turn;moveList[5*found+5]=16*3;found++;
-						moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=col;moveList[5*found+4]=row+turn;moveList[5*found+5]=16*2;found++;
-						moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=col;moveList[5*found+4]=row+turn;moveList[5*found+5]=16*4;found++;
+						moveList[found+1]=col+row*8+col*64+(row+turn)*512+5*4096;found++;
+						moveList[found+1]=col+row*8+col*64+(row+turn)*512+3*4096;found++;
+						moveList[found+1]=col+row*8+col*64+(row+turn)*512+2*4096;found++;
+						moveList[found+1]=col+row*8+col*64+(row+turn)*512+4*4096;found++;
 					} else {
-						moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=col;moveList[5*found+4]=row+turn;moveList[5*found+5]=0;found++;
+						moveList[found+1]=col+row*8+col*64+(row+turn)*512;found++;
 					}
 					
 					
 					// check if pawn on start square + if 2 move push possible
 					if (row==1 && turn==1 && board[col][row+2*turn]==0){
-						moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=col;moveList[5*found+4]=row+2*turn;moveList[5*found+5]=0;found++;
+						moveList[found+1]=col+row*8+col*64+(row+2*turn)*512;found++;
 					}
 					if (row==6 && turn==-1 && board[col][row+2*turn]==0){
-						moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=col;moveList[5*found+4]=row+2*turn;moveList[5*found+5]=0;found++;
+						moveList[found+1]=col+row*8+col*64+(row+2*turn)*512;found++;
 					}
 					
 				}
@@ -302,12 +324,12 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 					dir=3-(turn+1)/2;
 					if (endpiece*piece<0 && (pinnedDirections[col][row]==-1 || pinnedDirections[col][row]==dir)){ // there is something to capture and not pinned or pinned in the right direction
 						if (row+turn==0 || row+turn==7){ // this is additionally a promotion
-							moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=col-1;moveList[5*found+4]=row+turn;moveList[5*found+5]=abs(endpiece)+16*5;found++;
-							moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=col-1;moveList[5*found+4]=row+turn;moveList[5*found+5]=abs(endpiece)+16*3;found++;
-							moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=col-1;moveList[5*found+4]=row+turn;moveList[5*found+5]=abs(endpiece)+16*2;found++;
-							moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=col-1;moveList[5*found+4]=row+turn;moveList[5*found+5]=abs(endpiece)+16*4;found++;
+							moveList[found+1]=col+row*8+(col-1)*64+(row+turn)*512+5*4096+32768*abs(endpiece);found++;
+							moveList[found+1]=col+row*8+(col-1)*64+(row+turn)*512+3*4096+32768*abs(endpiece);found++;
+							moveList[found+1]=col+row*8+(col-1)*64+(row+turn)*512+2*4096+32768*abs(endpiece);found++;
+							moveList[found+1]=col+row*8+(col-1)*64+(row+turn)*512+4*4096+32768*abs(endpiece);found++;
 						} else {
-							moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=col-1;moveList[5*found+4]=row+turn;moveList[5*found+5]=abs(endpiece);found++;
+							moveList[found+1]=col+row*8+(col-1)*64+(row+turn)*512+32768*abs(endpiece);found++;
 						}
 					}
 				}
@@ -318,12 +340,12 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 					dir=2+(turn+1)/2;
 					if (endpiece*piece<0 && (pinnedDirections[col][row]==-1 || pinnedDirections[col][row]==dir)){ // there is something to capture and not pinned or pinned in the right direction
 						if (row+turn==0 || row+turn==7){ // this is additionally a promotion
-							moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=col+1;moveList[5*found+4]=row+turn;moveList[5*found+5]=abs(endpiece)+16*5;found++;
-							moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=col+1;moveList[5*found+4]=row+turn;moveList[5*found+5]=abs(endpiece)+16*3;found++;
-							moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=col+1;moveList[5*found+4]=row+turn;moveList[5*found+5]=abs(endpiece)+16*2;found++;
-							moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=col+1;moveList[5*found+4]=row+turn;moveList[5*found+5]=abs(endpiece)+16*4;found++;
+							moveList[found+1]=col+row*8+(col+1)*64+(row+turn)*512+5*4096+32768*abs(endpiece);found++;
+							moveList[found+1]=col+row*8+(col+1)*64+(row+turn)*512+3*4096+32768*abs(endpiece);found++;
+							moveList[found+1]=col+row*8+(col+1)*64+(row+turn)*512+2*4096+32768*abs(endpiece);found++;
+							moveList[found+1]=col+row*8+(col+1)*64+(row+turn)*512+4*4096+32768*abs(endpiece);found++;
 						} else {
-							moveList[5*found+1]=col;moveList[5*found+2]=row;moveList[5*found+3]=col+1;moveList[5*found+4]=row+turn;moveList[5*found+5]=abs(endpiece);found++;
+							moveList[found+1]=col+row*8+(col+1)*64+(row+turn)*512+32768*abs(endpiece);found++;
 						}
 					}
 				}
@@ -371,25 +393,21 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 			// will flag for deletion automatically, unless a piece lands on a blocking square (note: all king moves and en passant moves are not generated yet)
 			
 			plsDelete=true;
-			if (blockingSquares[moveList[5*i-2]][moveList[5*i-1]]!=0){
-				assignMakeMove(board,moveList[5*i-4],moveList[5*i-3],moveList[5*i-2],moveList[5*i-1],moveList[5*i]);
+			if (blockingSquares[(moveList[i]>>6)&0b111][(moveList[i]>>9)&0b111]!=0){
+				assignMakeMove(board,moveList[i]);
 				if (isKingInCheck(board,turn,kingCol,kingRow)==0){
 					plsDelete=false;
 				}
-				assignUndoMove(board,moveList[5*i-4],moveList[5*i-3],moveList[5*i-2],moveList[5*i-1],moveList[5*i]);
+				assignUndoMove(board,moveList[i]);
 			}
 			
 			if (plsDelete){	
 				deleted++;
-				moveList[5*i-4]=-100;
-				moveList[5*i-3]=-100;
-				moveList[5*i-2]=-100;
-				moveList[5*i-1]=-100;
-				moveList[5*i-0]=-100;
+				moveList[i]=-100;
 			}
 			
 		}
-	}	
+	}
 	
 	
 	
@@ -405,7 +423,7 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 	
 	int move2position=1;
 	if (deleted>0){
-		for (int i=1; i<=5*found;i++){
+		for (int i=1; i<=found;i++){
 			if (moveList[i]!=-100){
 				moveList[move2position]=moveList[i];
 				move2position++;
@@ -419,14 +437,14 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 	**** 9. adding king moves ****
 	*****************************/
 
-	targetRow=kingRow-1;targetCol=kingCol-1;endpiece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){	moveList[5*found+1]=kingCol;moveList[5*found+2]=kingRow;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=abs(endpiece);found++;}
-	targetRow=kingRow-1;targetCol=kingCol+0;endpiece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){	moveList[5*found+1]=kingCol;moveList[5*found+2]=kingRow;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=abs(endpiece);found++;}
-	targetRow=kingRow-1;targetCol=kingCol+1;endpiece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){	moveList[5*found+1]=kingCol;moveList[5*found+2]=kingRow;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=abs(endpiece);found++;}
-	targetRow=kingRow+0;targetCol=kingCol+1;endpiece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){	moveList[5*found+1]=kingCol;moveList[5*found+2]=kingRow;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=abs(endpiece);found++;}
-	targetRow=kingRow+0;targetCol=kingCol-1;endpiece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){	moveList[5*found+1]=kingCol;moveList[5*found+2]=kingRow;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=abs(endpiece);found++;}
-	targetRow=kingRow+1;targetCol=kingCol-1;endpiece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){	moveList[5*found+1]=kingCol;moveList[5*found+2]=kingRow;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=abs(endpiece);found++;}
-	targetRow=kingRow+1;targetCol=kingCol+0;endpiece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){	moveList[5*found+1]=kingCol;moveList[5*found+2]=kingRow;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=abs(endpiece);found++;}
-	targetRow=kingRow+1;targetCol=kingCol+1;endpiece=board[targetCol][targetRow]; if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){	moveList[5*found+1]=kingCol;moveList[5*found+2]=kingRow;moveList[5*found+3]=targetCol;moveList[5*found+4]=targetRow;moveList[5*found+5]=abs(endpiece);found++;}
+	targetRow=kingRow-1;targetCol=kingCol-1;endpiece=board[targetCol][targetRow]; if (targetRow>=0 && targetCol>=0 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}
+	targetRow=kingRow-1;targetCol=kingCol+0;endpiece=board[targetCol][targetRow]; if (targetRow>=0                 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}
+	targetRow=kingRow-1;targetCol=kingCol+1;endpiece=board[targetCol][targetRow]; if (targetRow>=0 && targetCol<=7 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}
+	targetRow=kingRow+0;targetCol=kingCol-1;endpiece=board[targetCol][targetRow]; if (                targetCol>=0 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}
+	targetRow=kingRow+0;targetCol=kingCol+1;endpiece=board[targetCol][targetRow]; if (                targetCol<=7 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}
+	targetRow=kingRow+1;targetCol=kingCol-1;endpiece=board[targetCol][targetRow]; if (targetRow<=7 && targetCol>=0 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}
+	targetRow=kingRow+1;targetCol=kingCol+0;endpiece=board[targetCol][targetRow]; if (targetRow<=7                 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}
+	targetRow=kingRow+1;targetCol=kingCol+1;endpiece=board[targetCol][targetRow]; if (targetRow<=7 && targetCol<=7 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}
 	
 	
 	/*********************************
@@ -436,18 +454,18 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 	
 	if (turn==1 && currentlyInCheck==0){
 		if ((key&4) && board[0][0]==2 && board[1][0]==0 && board[2][0]==0 && board[3][0]==0 && board[4][0]==6 && !isAttacked[2][0] && !isAttacked[3][0]){ //white queen side
-			moveList[5*found+1]=4;moveList[5*found+2]=0;moveList[5*found+3]=2;moveList[5*found+4]=0;moveList[5*found+5]=0;found++;
+			moveList[found+1]=4+0*8+2*64+0*512;found++;
 		}
 		if ((key&2) && board[4][0]==6 && board[5][0]==0 && board[6][0]==0 && board[7][0]==2 && !isAttacked[5][0] && !isAttacked[6][0]){ //white king side
-			moveList[5*found+1]=4;moveList[5*found+2]=0;moveList[5*found+3]=6;moveList[5*found+4]=0;moveList[5*found+5]=0;found++;
+			moveList[found+1]=4+0*8+6*64+0*512;found++;
 		}
 	}
 	if (turn==-1 && currentlyInCheck==0){
 		if ((key&16) && board[0][7]==-2 && board[1][7]==0 && board[2][7]==0 && board[3][7]==0 && board[4][7]==-6 && !isAttacked[2][7] && !isAttacked[3][7]){ //black queen side
-			moveList[5*found+1]=4;moveList[5*found+2]=7;moveList[5*found+3]=2;moveList[5*found+4]=7;moveList[5*found+5]=0;found++;
+			moveList[found+1]=4+7*8+2*64+7*512;found++;
 		}
 		if ((key&8) && board[4][7]==-6 && board[5][7]==0 && board[6][7]==0 && board[7][7]==-2 && !isAttacked[5][7] && !isAttacked[6][7]){ //black king side
-			moveList[5*found+1]=4;moveList[5*found+2]=7;moveList[5*found+3]=6;moveList[5*found+4]=7;moveList[5*found+5]=0;found++;
+			moveList[found+1]=4+7*8+6*64+7*512;found++;
 		}
 	}
 	
@@ -464,13 +482,13 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 		startRow=3+(key&1);
 		if (pawnColumn>=1){ // check possible capture from left
 			if (board[pawnColumn-1][startRow]==turn){ // there is indeed a pawn there -> en passant is possible
-				moveList[5*found+1]=pawnColumn-1;moveList[5*found+2]=startRow;moveList[5*found+3]=pawnColumn;moveList[5*found+4]=startRow+turn;moveList[5*found+5]=128;
+				moveList[found+1]=(pawnColumn-1)+startRow*8+pawnColumn*64+(startRow+turn)*512+262144;
 				
 				// need to check if the move is indeed legal, if my pawn was pinned, if my opponent's pawn was pinned or if the pawns are on the same row as my king or if we are in check
 				if ((pinnedDirections[pawnColumn-1][startRow]!=-1) || (pinnedDirections[pawnColumn][startRow]!=-1) || (startRow==kingRow) || (currentlyInCheck!=0)){
-					assignMakeMove(board,moveList[5*found+1],moveList[5*found+2],moveList[5*found+3],moveList[5*found+4],moveList[5*found+5]);
+					assignMakeMove(board,moveList[found+1]);
 					result=isKingInCheck(board,turn,kingCol,kingRow);
-					assignUndoMove(board,moveList[5*found+1],moveList[5*found+2],moveList[5*found+3],moveList[5*found+4],moveList[5*found+5]);
+					assignUndoMove(board,moveList[found+1]);
 
 					if (result==0){
 						found++;
@@ -484,13 +502,13 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 		
 		if (pawnColumn<=6){ // check possible capture from right
 			if (board[pawnColumn+1][startRow]==turn){ // there is indeed a pawn there -> en passant is possible
-				moveList[5*found+1]=pawnColumn+1;moveList[5*found+2]=startRow;moveList[5*found+3]=pawnColumn;moveList[5*found+4]=startRow+turn;moveList[5*found+5]=128;
+				moveList[found+1]=(pawnColumn+1)+startRow*8+pawnColumn*64+(startRow+turn)*512+262144;
 				
 				// need to check if the move is indeed legal, if my pawn was pinned, if my opponent's pawn was pinned or if the pawns are on the same row as my king
 				if ((pinnedDirections[pawnColumn+1][startRow]!=-1) || (pinnedDirections[pawnColumn][startRow]!=-1) || (startRow==kingRow) || (currentlyInCheck!=0)){
-					assignMakeMove(board,moveList[5*found+1],moveList[5*found+2],moveList[5*found+3],moveList[5*found+4],moveList[5*found+5]);
+					assignMakeMove(board,moveList[found+1]);
 					result=isKingInCheck(board,turn,kingCol,kingRow);
-					assignUndoMove(board,moveList[5*found+1],moveList[5*found+2],moveList[5*found+3],moveList[5*found+4],moveList[5*found+5]);
+					assignUndoMove(board,moveList[found+1]);
 
 					if (result==0){
 						found++;
@@ -505,7 +523,7 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 	}
 	
 	moveList[0]=found; // finally assign moveList[0] to the number of moves
-	moveList[5*found+1]=isAttacked[kingCol][kingRow]; // add an extra number indicating if we are in check
+	moveList[found+1]=isAttacked[kingCol][kingRow]; // add an extra number indicating if we are in check
 	
 	
 	
@@ -514,60 +532,73 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 	*******************************************/
 	
 	
-	if (!sortMoves){return;} // turning off moveordering
+	if (sortMoves==false || found <=1){return;} // turning off moveordering
 
-	int quickEvals[250]; // will start with move 1
-	int quickEval;
 
-	int startPieceValue,endPieceValue;
+	vector<int> quickEvals(found, 0);
+	vector<int> PSTEvals(found, 0);
+	
+	
+	int startPieceValue,endPieceValue,startCol,endCol,endRow,PST_gain;
+	
+	
+	unsigned int move;
+	
 	for (int i=1; i<=moveList[0]; i++){
-		startpiece=board[moveList[5*i-4]][moveList[5*i-3]];
-		endpiece=board[moveList[5*i-2]][moveList[5*i-1]];
+		move=moveList[i];
+		startCol=move&0b111;
+		startRow=(move>>3)&0b111;
+		endCol=(move>>6)&0b111;
+		endRow=(move>>9)&0b111;
+		
+		startpiece=board[startCol][startRow];
+		endpiece=board[endCol][endRow];
 		
 		startPieceValue=abs(startpiece);
 		if (startPieceValue>=5){startPieceValue=10;}
 		if (startPieceValue==2){startPieceValue=5;}
 		if (startPieceValue==4){startPieceValue=3;}
-		
-
 
 		endPieceValue=abs(endpiece);
 		if (endPieceValue>=5){endPieceValue=10;} // however, endpiece==King should not be possible
 		if (endPieceValue==2){endPieceValue=5;}
 		if (endPieceValue==4){endPieceValue=3;}
 		
+		// pure PST difference (this is only an estimated, since we don't use the current gamePhase)
+		PST_gain=PST_average[6+startpiece][endCol][endRow]*turn-PST_average[6+startpiece][startCol][startRow]*turn;
+		
+		
+		// I want: 
+		// + 100* score of captured piece
+		// - 100* score of moveing Piece if the target square is attacked
+		// + 300* [moving piece is a queen or rook and it was attacked]
+		// + 300* [moving piece is a bishop or knight and it was attacked by a pawn]
+		// + difference of the average PST from moving that piece
+		// + 10000 if move=thisMoveFirst
+		
+		// before calculating these quickEvals, one could count how often a square is attacked ...
+		// One could also quickly check for checks
+		
 
-		
-		// here come the elo points: //
-		
-		
-		quickEvals[i]=endPieceValue                                                               // bonus for capturing a piece
-					-startPieceValue*(isAttacked[moveList[5*i-2]][moveList[5*i-1]])               // bonus if the square we are moving to is not attacked
-					+3*(startPieceValue>=6)*isAttacked[moveList[5*i-4]][moveList[5*i-3]]          // bonus if we move a queen or a rook and the startsquare was attacked
-					+(PST_average[6+startpiece][moveList[5*i-4]][moveList[5*i-3]]*turn <  
-					PST_average[6+startpiece][moveList[5*i-2]][moveList[5*i-1]]*turn)        // minimal bonus if moving to a better PST square
-					+10;                                                             	          // offset: now takes values from 0-10+0+0+10=0 to 10-0+3+1+10=24
 
+		quickEvals[i-1]=100*endPieceValue                                                 // bonus for capturing a piece
+						-100*startPieceValue*(isAttacked[endCol][endRow])                 // bonus if the square we are moving to is not attacked
+						+300*(startPieceValue>=5)*isAttacked[startCol][startRow]          // bonus if we move a queen or a rook and the startsquare was attacked
+						+300*(startPieceValue==3)*isPawnAttacked[startCol][startRow]      // bonus if we move a bishop or knight and the startsquare was attacked by a pawn
+						+PST_gain;
+						
+						
+		PSTEvals[i-1]=PST_gain;
 		
 		
-		if ((quickEvals[i]<0) || (quickEvals[i]>24)){
-			cout << "ono, we have a eval of "<< quickEvals[i]<< "\n";
-			cout << endpiece << "\n";
-			cout << startpiece << "\n";
-			cout << isAttacked[moveList[5*i-2]][moveList[5*i-1]] << "\n";
-			cout << startpiece*(!isAttacked[moveList[5*i-2]][moveList[5*i-1]]) << "\n";
-			cout << "\n";
-		}
-		
-		
-		//printMove(moveList[5*i-4],moveList[5*i-3],moveList[5*i-2],moveList[5*i-1],moveList[5*i]);
+		//printMove(moveList[i]);
 		//cout << ":  "<<quickEvals[i]<<"\n";
-		// could also incorporate en passant
-		// could also incorporate promotions
-		// could also incorporate moving away from attacked squares, e.g. saving an attacked queen
-		// could also incorporate (with additional work) being attacked by a pawn or a different piece
-		// could also incorporate (with additional work) giving a check
-		// could also incorporate (with additional work) the PST
+	}
+	
+	if (thisMoveFirst!=0){
+		for (int i=1; i<=moveList[0]; i++){
+			quickEvals[i-1]+=10000*(moveList[i]%65536==thisMoveFirst);
+		}
 	}
 	
 	
@@ -575,43 +606,28 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, int move
 	**** 13. Moveordering: reordering moves ****
 	*******************************************/
 	
-	
-	
-	int sortingTable[24+1][219];
-	// will use entries sortingTable[i][0] to store how many entries sortingTable[i][.] has
+	vector<pair<int, int>> value_index_pairs(found);
+    for (int i=0; i<found; i++) {
+        value_index_pairs[i] = {-quickEvals[i], i};
+    }
 
-	for (int i=0;i<=24;i++){
-		sortingTable[i][0]=0;
-	}	
+    sort(value_index_pairs.begin(), value_index_pairs.end());
 
-	for (int i=1; i<=found; i++){
-		quickEval=quickEvals[i];
-		sortingTable[quickEval][0]++;
-		sortingTable[quickEval][sortingTable[quickEval][0]]=i;
-	}
-
-	int moveListCopy[250*5];
-	for (int i=0; i<=5*found; i++){
+	unsigned int moveListCopy[250];
+	for (int i=1;i<=found;i++){
 		moveListCopy[i]=moveList[i];
 	}
-
-	int filled=0;
-	int hv;
-	for (int eval=24; eval>=0; eval--){
-		for (int j=1;j<=sortingTable[eval][0];j++){
-			hv=sortingTable[eval][j];
-			moveList[5*filled+1]=moveListCopy[hv*5-4];
-			moveList[5*filled+2]=moveListCopy[hv*5-3];
-			moveList[5*filled+3]=moveListCopy[hv*5-2];
-			moveList[5*filled+4]=moveListCopy[hv*5-1];
-			moveList[5*filled+5]=moveListCopy[hv*5-0];
-			filled++;
-		}
-	}
-
-
+	
+	int filled=1;
+    for (const auto& pair : value_index_pairs) {
+        //cout << pair.second << " ";
+		moveList[filled]=moveListCopy[pair.second+1];filled++;
+    }
+	
+	moveList[moveList[0]+1]=moveList[found+1];// fixing the check bit
+	
+	
 	return;
-
 
 }
 

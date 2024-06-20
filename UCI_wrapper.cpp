@@ -4,8 +4,9 @@
 
 #include <iostream>     // for input/output
 #include <bitset>       // for printing the binary representation of the "key"
+#include <vector>       // for sequences
+#include <algorithm>    // for sorting sequences
 
-#include <unistd.h>     // for sleep(1)
 #include <string>       // for fen2Board
 #include <stdlib.h>     // srand, rand
 #include <iomanip>      // for printing 2 floats
@@ -19,13 +20,11 @@ using namespace std;
 **************************/
 
 #include "globalVariables.h"
-#include "plotBoard.h"
+#include "printingStuff.h"
 #include "assignMoveListAndSort.h"
-#include "printKey.h"
 #include "newKey.h"
-#include "printMoves.h"
 #include "assignFen2Board.h"
-#include "assignMoveString2Move.h"
+#include "moveString2Move.h"
 #include "perft.h"
 #include "fen2key.h"
 #include "positionFeatures.h"
@@ -33,6 +32,7 @@ using namespace std;
 #include "setBonusOfKey.h"
 #include "engine.h"
 #include "stationaryEval.h"
+
 
 /***************
 *** Let's go ***
@@ -50,14 +50,14 @@ int main() {
 	unsigned long long int key=     0b1000000000000100000000000001100010000000100000000011111;
 	oracle(board,key);
 	
-	///////////////////
-	int maxMillisecondsTime2Think=30000;
-	///////////////////
+	int maxMillisecondsTime2Think=30000;   //  <<<---- this parameter could be changed!!!
+	
 	
 	int millisecondsTime2Think,perftDepth,hv,depth;
 	bool movesFound=false; //for fen ... moves ...
 	std::string input, fenString, moveString,word1,word2,word3,word4,word5,word6,word7,word8,word9;
-	int move[5],lastWhitespace,wtime,btime,winc,binc,time2think;
+	int lastWhitespace,wtime,btime,winc,binc;
+	unsigned int move;
 	
 	
 	while (true) {
@@ -65,18 +65,21 @@ int main() {
 		std::getline(std::cin, input);
 
 		if (input=="uci"){
-			cout << "id name Purple Panda 16\nid author J. Steininger\nuciok\n";
+			cout << "id name Purple Panda 17\nid author J. Steininger\nuciok\n";
 			
 		} else if (input=="d"){
 			plotBoard(board);
+			cout << "fen: ";
+			printFen(board,key);
 			printKey(key);
+
 			oracle(board,key);
 			key=setBonusOfKey(board,key);
 			cout << "Stationary eval: "<< stationaryEval(board,key)<< "\n";
-			int moveList[250*5];
+			unsigned int moveList[250];
 			assignMoveListAndSort(board,key,moveList,true);
-			cout << "in check: "<< moveList[5*moveList[0]+1]<< "\n";
-			
+			cout << "in check: "<< moveList[moveList[0]+1]<< "\n";
+			printMoveList(moveList);
 			
 		} else if (input=="pst"){
 			oracle(board,key);
@@ -85,11 +88,11 @@ int main() {
 					cout << "Piece: "<<color*piece<<"\n";
 					for (int row=7; row>=0; row--){
 						for (int col=0; col<8; col++){
-							hv=PST_mg[piece*color+6][col][row]; // this only shows the middlegame PST
-							if (hv<=-10){cout << hv<< "  ";}
-							else if (hv<0){cout <<" " << hv<< "  ";}
-							else if (hv<10){cout <<"  " << hv<< "  ";}
-							else {cout <<" " << hv<< "  ";}
+							hv=PST_average[piece*color+6][col][row]; // this shows current PST
+							if      (hv<=-100)          {cout << hv << " ";}
+							else if (hv<=-10 || hv>=100){cout << " "<< hv << " ";}
+							else if (hv<0 || hv >=10)   {cout << "  " << hv << " ";}
+							else                        {cout << "   " << hv << " ";}
 						}
 						cout <<"\n";
 					}
@@ -106,7 +109,7 @@ int main() {
 			plotBoard(board);
 			
 			// here can be random code
-			int moveList[250*5];
+			unsigned int moveList[250];
 			int asd1,asd2;
 			
 			asd1=clock();
@@ -116,12 +119,9 @@ int main() {
 			asd2=clock();
 			cout << "duration: "<<asd2-asd1<< "\n";
 			
-		} else if (input=="switch1"){
-			switch1=!switch1;
-			cout << "switch1: " << switch1 <<"\n";
-			
+				
 		} else if (input=="moveorder"){
-			int moveList[250*5];
+			unsigned int moveList[250];
 			assignMoveListAndSort(board,key,moveList,true);
 			printMoveList(moveList);
 			
@@ -131,7 +131,7 @@ int main() {
 		} else if (input=="isready"){
 			cout << "readyok\n";
 			
-		} else if (input=="quit"){
+		} else if (input=="quit" || input=="exit"){
 			break;	
 			
 		} else if (input.substr(0,17)=="position startpos"){
@@ -156,11 +156,10 @@ int main() {
 							if (input.substr(j,1)==" "){
 							
 								moveString= input.substr(i+1,j-i);
-								// ich hab derzeit board und key, und mache jetzt moveString
-								assignMoveString2Move(move,board,moveString);
+								move=moveString2Move(board,moveString);
 								
-								key=newKey(board,key,move[0],move[1],move[2],move[3],move[4]);
-								assignMakeMove(board,move[0],move[1],move[2],move[3],move[4]);
+								key=newKey(board,key,move);
+								assignMakeMove(board,move);
 								
 								for (int k=98;k>=0;k--){previous100PositionHashes[k+1]=previous100PositionHashes[k];}  // move stack of previous 100 position
 								previous100PositionHashes[0]=hashFunction(board,key); // save new Hash position
@@ -203,11 +202,10 @@ int main() {
 							if (input.substr(j,1)==" "){
 								
 								moveString= input.substr(i+1,j-i);
-								// ich hab derzeit board und key, und mache jetzt moveString
-								assignMoveString2Move(move,board,moveString);
+								move=moveString2Move(board,moveString);
 								
-								key=newKey(board,key,move[0],move[1],move[2],move[3],move[4]);
-								assignMakeMove(board,move[0],move[1],move[2],move[3],move[4]);
+								key=newKey(board,key,move);
+								assignMakeMove(board,move);
 								
 								for (int k=98;k>=0;k--){previous100PositionHashes[k+1]=previous100PositionHashes[k];}  // move stack of previous 100 position
 								previous100PositionHashes[0]=hashFunction(board,key); // save new Hash position
@@ -322,7 +320,7 @@ int main() {
 			if (word8=="binc"){binc=stoi(word9);}
 
 			if (word2=="empty"){ // only "go" found
-				engine(board, key, 750,1000); // allows 80 moves in a 1 minute game.
+				engine(board, key, 1000,1000); // thinks for 1 second
 				
 			} else { // there is at least wtime and btime
 				if (key%2==1){ // white's turn					

@@ -8,17 +8,17 @@
 *** Guard ***
 ************/
 
-#ifndef assignMoveString2MoveFILE
-#define assignMoveString2MoveFILE
+#ifndef moveString2MoveFILE
+#define moveString2MoveFILE
 
 /***************
 *** Let's go ***
 ***************/
 
 
-void assignMoveString2Move (int move[5], int board[8][8],std::string moveString){
-	//using the method 'assigning values to input array'
-	int c1,c2,r1,r2,startPiece,endPiece,adInfo;
+unsigned int moveString2Move (int board[8][8],std::string moveString){
+	unsigned int move;
+	int c1,c2,r1,r2,startPiece,endPiece;
 	
 	if (moveString.substr(0,1)=="a"){c1=0;}
 	if (moveString.substr(0,1)=="b"){c1=1;}
@@ -56,38 +56,31 @@ void assignMoveString2Move (int move[5], int board[8][8],std::string moveString)
 	if (moveString.substr(3,1)=="7"){r2=6;}
 	if (moveString.substr(3,1)=="8"){r2=7;}
 	
-	adInfo=0;
-	
-	move[0]=c1;
-	move[1]=r1;
-	move[2]=c2;
-	move[3]=r2;
 	startPiece=board[c1][r1];
 	endPiece=board[c2][r2];		
 	
-	adInfo+=abs(endPiece); // this is also in line with en pessant
 	
+	move=c1+8*r1+64*c2+512*r2+32768*abs(endPiece);	
 	
 	if (startPiece==1 && r1==6){ // this was a promotion
-		if (moveString.substr(4,1)=="r"){adInfo+=16*2;}
-		if (moveString.substr(4,1)=="n"){adInfo+=16*3;}
-		if (moveString.substr(4,1)=="b"){adInfo+=16*4;}
-		if (moveString.substr(4,1)=="q"){adInfo+=16*5;}
+		if (moveString.substr(4,1)=="r"){move+=4096*2;}
+		if (moveString.substr(4,1)=="n"){move+=4096*3;}
+		if (moveString.substr(4,1)=="b"){move+=4096*4;}
+		if (moveString.substr(4,1)=="q"){move+=4096*5;}
 	}		
 	if (startPiece==-1 && r1==1){ // this was a promotion
-		if (moveString.substr(4,1)=="r"){adInfo+=16*2;}
-		if (moveString.substr(4,1)=="n"){adInfo+=16*3;}
-		if (moveString.substr(4,1)=="b"){adInfo+=16*4;}
-		if (moveString.substr(4,1)=="q"){adInfo+=16*5;}
+		if (moveString.substr(4,1)=="r"){move+=4096*2;}
+		if (moveString.substr(4,1)=="n"){move+=4096*3;}
+		if (moveString.substr(4,1)=="b"){move+=4096*4;}
+		if (moveString.substr(4,1)=="q"){move+=4096*5;}
 	}
 
-	if (abs(startPiece)==1 && c1!=c2 && endPiece==0){ // has to be an en pessant move
-		adInfo=128;
+	if (abs(startPiece)==1 && c1!=c2 && endPiece==0){ // has to be an en passant move
+		move+=262144;
 	}
 	
-	move[4]=adInfo;
 	
-	return;
+	return move;
 }
 
 #endif

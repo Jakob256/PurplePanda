@@ -4,7 +4,7 @@
 
 #include "globalVariables.h"
 #include "eval.h"
-#include "printMoves.h"
+#include "printingStuff.h"
 #include "oracle.h"
 #include "setBonusOfKey.h"
 #include "assignMoveListAndSort.h"
@@ -33,14 +33,15 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	time=time*CLOCKS_PER_SEC/1000;
 	int endTime=startTime+time;
 
-	/************************************
-	***** reseting counting numbers *****
-	************************************/
+	/*************************************
+	***** resetting counting numbers *****
+	*************************************/
 
-	countingStationaryEvalCalled=0;
-	countingEvalCalled=0;
-	countingMoveGenerationCalled=0;
-	countingHashesStored=0;
+	staticeval=0;
+	nodes=0;
+	movegen=0;
+	hashstored=0;
+	hashhits=0;
 	
 	/*****************************
 	***** consult the oracle *****
@@ -54,16 +55,15 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	****************************************/
 	
 	// prepare default move:
-	int moveList[250*5];
+	unsigned int moveList[250];
 	assignMoveListAndSort(board,key,moveList,true);
-	for (int i=0;i<5;i++){
-		rootBestMove[i]=moveList[i+1];
-	}
+	rootBestMove=moveList[1];
+	
 	
 	// in case of only one legal move:
 	if (moveList[0]==1){
 		cout << "bestmove ";
-		printMove(rootBestMove[0],rootBestMove[1],rootBestMove[2],rootBestMove[3],rootBestMove[4]);
+		printMove(rootBestMove);
 		cout << "\n";
 		return;
 	} 
@@ -73,26 +73,23 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 		float bestScore=-INF*turn;
 		float score;
 		unsigned long long int newKeyy;
-		
+		unsigned int move;
 		for (int i=1; i<=moveList[0];i++){
-			newKeyy=newKey(board,key,moveList[5*i-4],moveList[5*i-3],moveList[5*i-2],moveList[5*i-1],moveList[5*i-0]);
+			move=moveList[i];
+			newKeyy=newKey(board,key,move);
 			
-			assignMakeMove(board,moveList[5*i-4],moveList[5*i-3],moveList[5*i-2],moveList[5*i-1],moveList[5*i-0]);
+			assignMakeMove(board,move);
 			score=stationaryEval(board,newKeyy);
-			assignUndoMove(board,moveList[5*i-4],moveList[5*i-3],moveList[5*i-2],moveList[5*i-1],moveList[5*i-0]);
+			assignUndoMove(board,move);
 			
 			if (score*turn>bestScore*turn){
 				bestScore=score;
-				rootBestMove[0]=moveList[5*i-4];
-				rootBestMove[1]=moveList[5*i-3];
-				rootBestMove[2]=moveList[5*i-2];
-				rootBestMove[3]=moveList[5*i-1];
-				rootBestMove[4]=moveList[5*i];
+				rootBestMove=move;
 			}
 		}
 		
 		cout << "bestmove ";
-		printMove(rootBestMove[0],rootBestMove[1],rootBestMove[2],rootBestMove[3],rootBestMove[4]);
+		printMove(rootBestMove);
 		cout << "\n";
 		return;
 	}
@@ -107,14 +104,19 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	
 	for (int depth2go=2; depth2go<=20; depth2go++){	
 		if (depth2go>inputDepth){break;}
-		maxDepth=8;
-		if (depth2go>=7){maxDepth=depth2go+2;}
+		maxDepth=depth2go+4;
 		if (clock()<endTime){
 			evaluation=eval(board,key,hashFunction(board,key),0,depth2go,-INF,+INF,endTime,maxDepth);
 			if (clock()<endTime){
-				
-				cout << "info depth "<< depth2go<<" score cp " << (int)(evaluation*100*turn) << " nodes "<< countingStationaryEvalCalled<< " pv ";
-				printMove(rootBestMove[0],rootBestMove[1],rootBestMove[2],rootBestMove[3],rootBestMove[4]);
+				cout <<
+				"info depth "<< depth2go<<
+				" score cp " << (int)(evaluation*100*turn) << 
+				" nodes "<< nodes<< 
+				" time "<<(clock()- startTime)*1000/CLOCKS_PER_SEC <<
+				" hashhits "<<hashhits<<
+				" hashstored "<<hashstored<<
+				" pv "; 
+				printMove(rootBestMove);
 				cout << "\n";
 			}
 		}
@@ -128,14 +130,12 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	***** output best move *****
 	***************************/
 
-	cout << "\ncountingStationaryEvalCalled: "<<countingStationaryEvalCalled<< "\n"; 
-	cout << "countingEvalCalled: "<<countingEvalCalled<< "\n";
-	cout << "countingMoveGenerationCalled: "<<countingMoveGenerationCalled<< "\n";
-	cout << "countingHashesStored: "<<countingHashesStored<< "\n";
-	
+	cout << "\nnodes: "<<nodes<< "\n"; 
+	cout << "staticeval: "<<staticeval<< "\n";
+	cout << "movegen: "<<movegen<< "\n";
 	
 	cout << "bestmove ";
-	printMove(rootBestMove[0],rootBestMove[1],rootBestMove[2],rootBestMove[3],rootBestMove[4]);
+	printMove(rootBestMove);
 	cout << "\n";
 }	
 

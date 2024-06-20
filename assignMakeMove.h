@@ -15,15 +15,19 @@
 *** Let's go ***
 ***************/
 
-
-void assignMakeMove (int board[8][8],int c1, int r1, int c2, int r2, int adInfo){
-	//using the method 'assigning values to input array'
+void assignMakeMove(int board[8][8],unsigned int move){
+	short int c1=move&0b111;
+	short int r1=(move>>3)&0b111;
+	short int c2=(move>>6)&0b111;
+	short int r2=(move>>9)&0b111;
+	short int absPromotedTo=(move>>12)&0b111;
+	//short int absCaptured=(move>>15)&0b111;
+	bool enPassant =(move>>18)&0b1;
+	
 	
 	int piece=board[c1][r1];
 	
-	int turn=piece/abs(piece);
-	
-	if (adInfo==128){// it is an en pessant move:
+	if (enPassant){// it is an en passant move:
 		board[c1][r1]=0;
 		board[c2][r2]=piece;
 		board[c2][r1]=0;
@@ -51,8 +55,8 @@ void assignMakeMove (int board[8][8],int c1, int r1, int c2, int r2, int adInfo)
 	board[c1][r1]=0;
 
 	// check if this was a pawn move to the last rank:
-	if (piece==1 && r2==7){board[c2][r2]=adInfo/16;} // promotion
-	if (piece==-1 && r2==0){board[c2][r2]=-adInfo/16;} // promotion
+	if (piece==+1 && r2==7){board[c2][r2]=+absPromotedTo;} // promotion
+	if (piece==-1 && r2==0){board[c2][r2]=-absPromotedTo;} // promotion
 }
 
 #endif

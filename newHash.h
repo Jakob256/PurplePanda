@@ -18,10 +18,17 @@
 
 // has to applied to the board before making the move on the board
 
-long long int newHash(int board[8][8],unsigned long long int key, long long int hash, int c1, int r1, int c2, int r2, int adInfo){
+long long int newHash(int board[8][8],unsigned long long int key, long long int hash, unsigned int move){
+	short int c1=move&0b111;
+	short int r1=(move>>3)&0b111;
+	short int c2=(move>>6)&0b111;
+	short int r2=(move>>9)&0b111;
+	short int absPromotedTo=(move>>12)&0b111;
+	//short int absCaptured=(move>>15)&0b111;
+	bool enPassant =(move>>18)&0b1;
+	
 	long long int newHashh=hash;
-	int turn;
-	turn=key%2;
+	int turn=key%2;
 	
 	/*******************************************
 	**** calculate Piece Square Table Bonus ****
@@ -71,7 +78,7 @@ long long int newHash(int board[8][8],unsigned long long int key, long long int 
 	*****************************/
 	
 	
-	if (adInfo==128){ // move is an enpessant move 
+	if (enPassant){
 		newHashh -= board[c2][r1]*hashSquareNumbers[c2][r1];
 	}
 	
@@ -79,9 +86,9 @@ long long int newHash(int board[8][8],unsigned long long int key, long long int 
 	**** calculate promotion ****
 	****************************/
 	
-	if (adInfo>=16 && adInfo!=128){ // move is a promotion
+	if (absPromotedTo!=0){ // move is a promotion
 		newHashh -= board[c1][r1]*hashSquareNumbers[c2][r2]; // remove the pawn from promotion square
-		newHashh += board[c1][r1]*(adInfo/16)*hashSquareNumbers[c2][r2]; // add with the right color the promoted piece
+		newHashh += board[c1][r1]*absPromotedTo*hashSquareNumbers[c2][r2]; // add with the right color the promoted piece
 	}
 	
 	return newHashh;

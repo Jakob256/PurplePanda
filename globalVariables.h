@@ -15,7 +15,7 @@
 *** Let's go ***
 ***************/
 
-int rootBestMove[5];
+unsigned int rootBestMove;
 const float INF=10000000000.;
 
 
@@ -29,33 +29,18 @@ long long int PST_mg[6+1+6][8][8]={0};  // long long necessary to add it to newK
 long long int PST_eg[6+1+6][8][8]={0};  // long long necessary to add it to newKeyy
 int PST_average[6+1+6][8][8]={0};  // only used for moveordering
 
-/**************************
-*** for move generation ***
-**************************/
-
-// there are 4 directions: N,E, NW, NW in that order. Here in the list are the pieces marked that can go that way (i.e. rook, rook, bishop, bishop)
-const int moveGenerationHelper[4]={2,2,4,4};
-
-// directions in that order N,S,E,W,NW,SE,NE,SW,8 knight directions
-const int dx_LIST[16]={ 0, 0, 1,-1,-1, 1, 1,-1,-2,-2,-1,-1,+1,+1,+2,+2};
-const int dy_LIST[16]={ 1,-1, 0, 0, 1,-1, 1,-1,-1,+1,-2,+2,-2,+2,-1,+1};
 
 /***********************
 ** for counting calls **
 ***********************/
 
-int countingStationaryEvalCalled;
-int countingEvalCalled;
-int countingMoveGenerationCalled;
-int countingHashesStored;
-bool switch1=false;
+int nodes,staticeval,movegen,hashstored,hashhits;
 
 /*****************************
 ** for avoiding repetitions **
 *****************************/
 
 long long int previous100PositionHashes[100]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-
 
 /**********************
 ** hashes in general **
@@ -139,7 +124,7 @@ const long long int hashTurnNumber=217122680661300;
 
 const int hashMoveOrderingTableSize= 12700000;  // 8+2=10 Byte per entry
 long long int hashMoveOrderingTable_hash[12700000];    // must be the same number as above
-short int hashMoveOrderingTable_moveID[12700000];      // must be the same number as above
+unsigned short int hashMoveOrderingTable_moveID[12700000];      // must be the same number as above
 // first column to store the exact hash, to detect hash collisions
 // second column to store the id of a move
 

@@ -24,11 +24,8 @@ void oracle(int board[8][8],unsigned long long int key){
 	int piece;
 	int nrWhitePawns=0;
 	int nrBlackPawns=0;
-	int nrWhiteQueens=0;
-	int nrBlackQueens=0;
 	int pieceScoreWhite=0;
 	int pieceScoreBlack=0;
-	
 	
 	
 	for (int col=0;col<8;col++){
@@ -235,14 +232,64 @@ void oracle(int board[8][8],unsigned long long int key){
 		}
 	}
 	
-	float gP=gamePhaseFunction(board,key);
-	for (int i=0; i<8;i++){
-		for (int j=0; j<8;j++){
-			for (int piece=-6; piece < 7; piece++){
-				PST_average[6+piece][i][j]=gP/24.*PST_mg[6+piece][i][j]+(24.-gP)/24.*PST_eg[6+piece][i][j];
+	/*********************************************
+	*** Rook and Bishop Mobility Bonus/Penalty ***
+	*********************************************/
+	
+	int dx,dy,mobilityWhite,mobilityBlack,endpiece,targetRow,targetCol;
+	
+	for (int col=0;col<8;col++){// Rook
+		for (int row=0;row<8;row++){
+			mobilityWhite=0;
+			mobilityBlack=0;
+			
+			for (int i=0; i<4;i++){
+				if (i==0){dx=-1;dy= 0;}
+				if (i==1){dx= 1;dy= 0;}
+				if (i==2){dx= 0;dy=-1;}
+				if (i==3){dx= 0;dy= 1;}
+				for (int j=1; j<8; j++){
+					targetRow=row+dy*j;targetCol=col+dx*j;endpiece=board[targetCol][targetRow]; 
+					if (targetRow<0 || targetRow >7 || targetCol<0 || targetCol>7){break;}
+					if (endpiece==0){mobilityWhite++;mobilityBlack++;}
+					if (endpiece<0){mobilityWhite+=2;}
+					if (endpiece>0){mobilityBlack+=2;}
+					if (endpiece!=0){break;}
+				}
 			}
+			
+			PST_mg[6+2][col][row]+=(mobilityWhite-5)*4;
+			PST_mg[6-2][col][row]-=(mobilityBlack-5)*4;
 		}
 	}
+	
+	
+	for (int col=0;col<8;col++){// Bishop
+		for (int row=0;row<8;row++){
+			mobilityWhite=0;
+			mobilityBlack=0;
+			
+			for (int i=0; i<4;i++){
+				if (i==0){dx=-1;dy= 1;}
+				if (i==1){dx= 1;dy=-1;}
+				if (i==2){dx= 1;dy= 1;}
+				if (i==3){dx=-1;dy=-1;}
+				for (int j=1; j<8; j++){
+					targetRow=row+dy*j;targetCol=col+dx*j;endpiece=board[targetCol][targetRow]; 
+					if (targetRow<0 || targetRow >7 || targetCol<0 || targetCol>7){break;}
+					if (endpiece==0){mobilityWhite++;mobilityBlack++;}
+					if (endpiece<0){mobilityWhite+=2;}
+					if (endpiece>0){mobilityBlack+=2;}
+					if (endpiece!=0){break;}
+				}
+			}
+			
+			PST_mg[6+4][col][row]+=(mobilityWhite-5)*4;
+			PST_mg[6-4][col][row]-=(mobilityBlack-5)*4;
+		}
+	}
+	
+	
 	
 	
 	
@@ -250,7 +297,7 @@ void oracle(int board[8][8],unsigned long long int key){
 	*** Only one pawn remaining ***
 	******************************/
 
-	/*
+	
 	if (nrWhitePawns+nrBlackPawns==1){
 		int colPawn;
 		int rowPawn;
@@ -266,25 +313,46 @@ void oracle(int board[8][8],unsigned long long int key){
 			}
 		}
 		
-
 		for (int col=0;col<8;col++){
 			for (int row=0;row<8;row++){
+				for (int piece=-6;piece<=6;piece++){PST_eg[6+piece][col][row]=0;}
+				for (int piece=-6;piece<=6;piece++){PST_eg[6+piece][col][row]=0;}
+				PST_eg[6+1][col][row]=row*30;
+				PST_eg[6-1][col][row]=-(7-row)*30;
+				
+				
 				if ((row>rowPawn && colorPawn==1) || (row<rowPawn && colorPawn==-1)){ // in front of the pawn
-					pieceSquareTable[6-6][col][row]=-(16-abs(col-colPawn)*2);
-					pieceSquareTable[6+6][col][row]=+(16-abs(col-colPawn)*2);
+					PST_eg[6-6][col][row]= -(64-abs(col-colPawn)*8);
+					PST_eg[6+6][col][row]= +(64-abs(col-colPawn)*8);
 				} else {
-					pieceSquareTable[6-6][col][row]=-(16-2*max(abs(col-colPawn),abs(row-rowPawn-colorPawn)));
-					pieceSquareTable[6+6][col][row]=+(16-2*max(abs(col-colPawn),abs(row-rowPawn-colorPawn)));
+					PST_eg[6-6][col][row]= -(64-8*max(abs(col-colPawn),abs(row-rowPawn-colorPawn)));
+					PST_eg[6+6][col][row]= +(64-8*max(abs(col-colPawn),abs(row-rowPawn-colorPawn)));
 				}
+				
+				// copy to middlegame pst
+				for (int piece=-6;piece<=6;piece++){PST_mg[6+piece][col][row]=PST_eg[6+piece][col][row];}
+				
+				
 			}
 		}
 	}
 	
-	*/
 	
 	
+	/**************************************************
+	**** defining the average PST for moveordering ****
+	**************************************************/
+
 	
-	return;
+	float gP=gamePhaseFunction(board,key);
+	for (int i=0; i<8;i++){
+		for (int j=0; j<8;j++){
+			for (int piece=-6; piece < 7; piece++){
+				PST_average[6+piece][i][j]=gP/24.*PST_mg[6+piece][i][j]+(24.-gP)/24.*PST_eg[6+piece][i][j];
+			}
+		}
+	}
+	
 }
 	
 #endif

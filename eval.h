@@ -8,7 +8,7 @@
 #include "assignUndoMove.h"
 #include "newKey.h"
 #include "globalVariables.h"
-#include "moveID.h"
+//#include "moveID.h"
 
 /************
 *** Guard ***
@@ -23,13 +23,13 @@
 
 float eval(int board[8][8],unsigned long long int key, long long int hash, int atDepth, int depth2Go, float alpha, float beta, int endTime, int maxDepth){
 	
-	countingEvalCalled+=1;
+	nodes++;
 	int turn=-1+2*(key%2);
 	int nrPieces=((key>>9)&63);
 	
-	/****************************************************************
-	***** First we examine, wether we need to return imediately *****
-	****************************************************************/
+	/*****************************************************************
+	***** First we examine, wether we need to return immediately *****
+	*****************************************************************/
 	
 	if (depth2Go==0 || atDepth==maxDepth){
 		return stationaryEval(board,key) + (rand() % 100)/1000000.*randomness;
@@ -70,77 +70,49 @@ float eval(int board[8][8],unsigned long long int key, long long int hash, int a
 	
 	
 	
-	/**********************************************
-	***** Now we prepare the moves to examine *****
-	**********************************************/
+	/*************************************************
+	***** Generate and order move simultaneously *****
+	*************************************************/
+	
+	unsigned short int thisMoveFirst=0;
+	bool eligibleForHashMoveOrdering=false;
+	
+	int hash4moveOrder;
+	long long int hashOfTable;
+	unsigned short int moveIDD;
+	
+	if (atDepth<=5 && atDepth>0){
+		eligibleForHashMoveOrdering=true;
+	}
 	
 	
-	int moveList[250*5];
-	assignMoveListAndSort(board,key,moveList,true); // sorting moves
+	if (atDepth==0){  // move the root best move to first position
+		thisMoveFirst=rootBestMove&0b1111111111111111;
+	} else if (eligibleForHashMoveOrdering){
+		hash4moveOrder=int(abs(hash%hashMoveOrderingTableSize));
+		hashOfTable=hashMoveOrderingTable_hash[hash4moveOrder];
+		moveIDD=hashMoveOrderingTable_moveID[hash4moveOrder];
+		if (hashOfTable==hash){// we have the exact same hash stored!
+			thisMoveFirst=moveIDD;
+			hashhits++;
+		}
+	}
 	
 	
-	//if (moveList[moveList[0]*5+1]==0 &&  isKingInCheck(board,turn,0,0)){cout << "ono in eval\n";}
-	//if (moveList[moveList[0]*5+1]!=0 && !isKingInCheck(board,turn,0,0)){cout << "ono in eval\n"}
+	unsigned int moveList[250];
+	assignMoveListAndSort(board,key,moveList,1,thisMoveFirst);
+	
+	//if (moveList[moveList[0]+1]==0 &&  isKingInCheck(board,turn,0,0)){cout << "this should not happen!\n";}
+	//if (moveList[moveList[0]+1]!=0 && !isKingInCheck(board,turn,0,0)){cout << "this should not happen!\n";}
 	
 	if (moveList[0]==0){ //there is a final evaluation
-		if (moveList[moveList[0]*5+1]==1){ // we are in check
+		if (moveList[moveList[0]+1]==1){ // we are in check
 			return -turn*1000;
 		} else {
 			return 0;
 		}
 	}
 	
-	
-
-	
-	
-	/*************************************************
-	***** Do move ordering for alpha-beta search *****
-	*************************************************/
-
-	if (atDepth==0){  // move the root best move to first position
-		for (int i=1; i<=moveList[0];i++){
-			if (moveList[5*i-4]==rootBestMove[0] && moveList[5*i-3]==rootBestMove[1] && moveList[5*i-2]==rootBestMove[2] && moveList[5*i-1]==rootBestMove[3] && moveList[5*i]==rootBestMove[4]){
-				moveList[5*i-4]=moveList[1];moveList[5*i-3]=moveList[2];moveList[5*i-2]=moveList[3];moveList[5*i-1]=moveList[4];moveList[5*i]=moveList[5];
-				moveList[1]=rootBestMove[0];moveList[2]=rootBestMove[1];moveList[3]=rootBestMove[2];moveList[4]=rootBestMove[3];moveList[5]=rootBestMove[4];
-			}
-		}
-	}
-	
-	
-	bool eligibleForHashMoveOrdering=false;
-	
-	if (atDepth<=5 && atDepth>0){
-		eligibleForHashMoveOrdering=true;
-	}
-	
-	int hash4moveOrder,hv;
-	long long int hashOfTable;
-	short int moveIDD;
-	
-	if (eligibleForHashMoveOrdering){
-		countingHashesStored++;
-		//cout << "we are at depth "<< atDepth; // for verification
-		hash4moveOrder=int(abs(hash%hashMoveOrderingTableSize));
-		hashOfTable=hashMoveOrderingTable_hash[hash4moveOrder];
-		moveIDD=hashMoveOrderingTable_moveID[hash4moveOrder];
-		if (hashOfTable==hash){// we have the exact same hash stored!
-			
-			// here we could check if we sould simply play a quiet move
-			for (int i=1;i<=moveList[0];i++){
-				if (moveID(moveList[5*i-4],moveList[5*i-3],moveList[5*i-2],moveList[5*i-1],moveList[5*i])==moveIDD){
-					for (int j=1;j<=5;j++){
-						hv=moveList[j];
-						moveList[j]=moveList[5*i-5+j];
-						moveList[5*i-5+j]=hv;
-					}
-					break;
-				}
-				//if (i==moveList[0]){cout << "strange... the move was not found... \n";}
-			}
-		}
-		
-	}
 	
 	
 	/*******************************
@@ -156,19 +128,30 @@ float eval(int board[8][8],unsigned long long int key, long long int hash, int a
 	//if (atDepth==0){printMoveList(moveList);}// for admiring the root moves updated order
 
 	
+	bool aQuietMoveTried=false;
+	unsigned int move;
 	
-
 	for (int i=1; i<=moveList[0];i++){
+		move=moveList[i];
 		if (clock()>endTime){return 0;} // check if search has to be aborted.
 		
-
-		newKeyy=newKey(board,key,moveList[5*i-4],moveList[5*i-3],moveList[5*i-2],moveList[5*i-1],moveList[5*i-0]);
-		newHashh=newHash(board,key,hash,moveList[5*i-4],moveList[5*i-3],moveList[5*i-2],moveList[5*i-1],moveList[5*i-0]);
 		
-		assignMakeMove(board,moveList[5*i-4],moveList[5*i-3],moveList[5*i-2],moveList[5*i-1],moveList[5*i-0]);
+		// when depth2Go=1, we only want to try a single quiet move, that was highest ranked after moveordering
+		// this prunes the tree and also returns a better estimate of the true evaluation
+		// for instance, we won't move the queen to a very active square, where it can be captured by a pawn
+		if (move<=4095){ // 7*(1+8+64+512)
+			if (aQuietMoveTried && depth2Go==1){continue;}
+			aQuietMoveTried=true;
+		}
 		
 		
-		if (moveList[5*i]==0){ // no capture or anything
+		newKeyy=newKey(board,key,move);
+		newHashh=newHash(board,key,hash,move);
+		
+		assignMakeMove(board,move);
+		
+		
+		if (move<=4095){ // 7*(1+8+64+512): no capture or anything
 			score=eval(board,newKeyy,newHashh,atDepth+1,depth2Go-1,alpha,beta,endTime,maxDepth);
 			
 		} else {
@@ -179,12 +162,12 @@ float eval(int board[8][8],unsigned long long int key, long long int hash, int a
 			}	
 		}
 		
-		assignUndoMove(board,moveList[5*i-4],moveList[5*i-3],moveList[5*i-2],moveList[5*i-1],moveList[5*i-0]);
+		assignUndoMove(board,move);
 		
 		
-		/**********************************************************************************
-		***** Alpha/Beta Updates (unfortunatly long code because of HashTableUpdates) *****
-		**********************************************************************************/
+		/*************************************
+		***** Alpha/Beta Updates/Cutoffs *****
+		*************************************/
 		
 		
 		if (turn==1 && score >alpha){alpha=score;}
@@ -192,10 +175,11 @@ float eval(int board[8][8],unsigned long long int key, long long int hash, int a
 		
 		
 		if ((turn==1 && score >beta) || (turn==-1 && score <alpha)){ // "beta-cutoff"
-		
+			
 			if (eligibleForHashMoveOrdering){
 				hashMoveOrderingTable_hash[hash4moveOrder]=hash;
-				hashMoveOrderingTable_moveID[hash4moveOrder]=moveID(moveList[5*i-4],moveList[5*i-3],moveList[5*i-2],moveList[5*i-1],moveList[5*i]);
+				hashMoveOrderingTable_moveID[hash4moveOrder]=move&0b1111111111111111;
+				hashstored++;
 			}
 			
 			return score;
@@ -206,11 +190,7 @@ float eval(int board[8][8],unsigned long long int key, long long int hash, int a
 		if (score*turn>bestScore*turn){
 			bestScore=score;
 			if (atDepth==0 && clock()<endTime){
-				rootBestMove[0]=moveList[5*i-4];
-				rootBestMove[1]=moveList[5*i-3];
-				rootBestMove[2]=moveList[5*i-2];
-				rootBestMove[3]=moveList[5*i-1];
-				rootBestMove[4]=moveList[5*i];
+				rootBestMove=move;
 			}
 			bestMoveIndex=i;
 		}
@@ -226,7 +206,8 @@ float eval(int board[8][8],unsigned long long int key, long long int hash, int a
 	// store best move if no cutoff occured
 	if (eligibleForHashMoveOrdering){
 		hashMoveOrderingTable_hash[hash4moveOrder]=hash;
-		hashMoveOrderingTable_moveID[hash4moveOrder]=moveID(moveList[5*bestMoveIndex-4],moveList[5*bestMoveIndex-3],moveList[5*bestMoveIndex-2],moveList[5*bestMoveIndex-1],moveList[5*bestMoveIndex]);
+		hashMoveOrderingTable_moveID[hash4moveOrder]=moveList[bestMoveIndex]& 0b1111111111111111;
+		hashstored++;
 	}
 
 
