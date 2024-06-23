@@ -117,7 +117,7 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 				" hashstored "<<hashstored<<
 				" pv "; 
 				printMove(rootBestMove);
-				cout << "\n";
+				cout << std::endl;
 			}
 		}
 		
