@@ -62,16 +62,13 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	
 	// in case of only one legal move:
 	if (moveList[0]==1){
-		cout << "bestmove ";
-		printMove(rootBestMove);
-		cout << "\n";
+		cout << "bestmove "; printMove(rootBestMove); cout << "\n";
 		return;
 	} 
 	
 	// in case we are in the 3men tablebase:
 	if (nrPieces<=3){
-		float bestScore=-INF*turn;
-		float score;
+		int score,bestScore=-INF*turn;
 		unsigned long long int newKeyy;
 		unsigned int move;
 		for (int i=1; i<=moveList[0];i++){
@@ -88,9 +85,7 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 			}
 		}
 		
-		cout << "bestmove ";
-		printMove(rootBestMove);
-		cout << "\n";
+		cout << "bestmove "; printMove(rootBestMove); cout << "\n";
 		return;
 	}
 	
@@ -99,29 +94,30 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	***** start extensive search *****
 	*********************************/
 	
-	int maxDepth;
-	float evaluation;
+	int maxDepth,evaluation;
+	exitSearch=false;
 	
 	for (int depth2go=2; depth2go<=20; depth2go++){	
+		if (exitSearch){break;}
 		if (depth2go>inputDepth){break;}
-		maxDepth=depth2go+4;
-		if (clock()<endTime){
-			evaluation=eval(board,key,hashFunction(board,key),0,depth2go,-INF,+INF,endTime,maxDepth);
-			if (clock()<endTime){
-				cout <<
-				"info depth "<< depth2go<<
-				" score cp " << (int)(evaluation*100*turn) << 
-				" nodes "<< nodes<< 
-				" time "<<(clock()- startTime)*1000/CLOCKS_PER_SEC <<
-				" hashhits "<<hashhits<<
-				" hashstored "<<hashstored<<
-				" pv "; 
-				printMove(rootBestMove);
-				cout << std::endl;
-			}
-		}
 		
-		if (abs(evaluation)==1000){break;} // break immediately if there is a mate evaluation
+		maxDepth=depth2go+4;
+		evaluation=eval(board,key,hashFunction(board,key),0,depth2go,-INF,+INF,endTime,maxDepth);
+		
+		if (exitSearch){break;}
+		
+		cout <<
+		"info depth "<< depth2go<<
+		" score cp " << evaluation*turn << 
+		" nodes "<< nodes<< 
+		" time "<<(clock()- startTime)*1000/CLOCKS_PER_SEC <<
+		" hashhits "<<hashhits<<
+		" hashstored "<<hashstored<<
+		" pv "; 
+		printMove(rootBestMove);
+		cout << std::endl;
+		
+		if (abs(evaluation)==100000){break;} // break immediately if there is a mate evaluation
 	}
 	
 	
@@ -133,10 +129,7 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	cout << "\nnodes: "<<nodes<< "\n"; 
 	cout << "staticeval: "<<staticeval<< "\n";
 	cout << "movegen: "<<movegen<< "\n";
-	
-	cout << "bestmove ";
-	printMove(rootBestMove);
-	cout << "\n";
+	cout << "bestmove "; printMove(rootBestMove); cout << "\n";
 }	
 
 #endif

@@ -36,6 +36,10 @@ unsigned long long int newKey (int board[8][8],unsigned long long int key, unsig
 	
 	newKeyy=key^1; 
 	
+	if (move==0){ // nullmove
+		newKeyy=newKeyy&(newKeyy^(32)); // delete the en passant flag
+		return newKeyy;
+	}
 	
 	/***********************************
 	**** calculate casteling rights ****

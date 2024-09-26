@@ -9,7 +9,6 @@
 
 #include <string>       // for fen2Board
 #include <stdlib.h>     // srand, rand
-#include <iomanip>      // for printing 2 floats
 #include <time.h>       // clock_t, clock, CLOCKS_PER_SEC,time
 #include <math.h>       // for abs for some reason
 
@@ -65,7 +64,7 @@ int main() {
 		std::getline(std::cin, input);
 
 		if (input=="uci"){
-			cout << "id name Purple Panda 17\nid author J. Steininger\nuciok\n";
+			cout << "id name Purple Panda 18\nid author J. Steininger\nuciok\n";
 			
 		} else if (input=="d"){
 			plotBoard(board);
@@ -75,11 +74,7 @@ int main() {
 
 			oracle(board,key);
 			key=setBonusOfKey(board,key);
-			cout << "Stationary eval: "<< stationaryEval(board,key)<< "\n";
-			unsigned int moveList[250];
-			assignMoveListAndSort(board,key,moveList,true);
-			cout << "in check: "<< moveList[moveList[0]+1]<< "\n";
-			printMoveList(moveList);
+			cout << "Stationary eval: "<< stationaryEval(board,key)<< " cp\n";
 			
 		} else if (input=="pst"){
 			oracle(board,key);
@@ -100,10 +95,6 @@ int main() {
 				}
 			}
 			
-		} else if (input=="deterministic"){
-			randomness=0;
-			cout << "randomness off\n";
-				
 		} else if (input=="debug"){
 			cout << "degubbing:\n\n";
 			plotBoard(board);

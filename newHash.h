@@ -30,6 +30,14 @@ long long int newHash(int board[8][8],unsigned long long int key, long long int 
 	long long int newHashh=hash;
 	int turn=key%2;
 	
+	
+	/***********************
+	**** calculate Turn ****
+	***********************/
+	
+	newHashh += (1-2*turn)*hashTurnNumber;
+	if (move==0){return newHashh;} //nullmove
+	
 	/*******************************************
 	**** calculate Piece Square Table Bonus ****
 	*******************************************/
@@ -41,12 +49,6 @@ long long int newHash(int board[8][8],unsigned long long int key, long long int 
 	newHashh += b;
 	newHashh -= c;
 	
-	/***********************
-	**** calculate Turn ****
-	***********************/
-	
-	newHashh += (1-2*turn)*hashTurnNumber;
-
 	/****************************
 	**** calculate casteling ****
 	****************************/

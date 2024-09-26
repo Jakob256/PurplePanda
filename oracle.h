@@ -17,48 +17,12 @@
 
 void oracle(int board[8][8],unsigned long long int key){
 	
-	/************************
-	** pre search counting **
-	************************/
-	
-	int piece;
-	int nrWhitePawns=0;
-	int nrBlackPawns=0;
-	int pieceScoreWhite=0;
-	int pieceScoreBlack=0;
-	
-	
-	for (int col=0;col<8;col++){
-		for (int row=0;row<8;row++){
-			piece=board[col][row];
-			
-			if (piece==0){continue;}
-			
-			if (piece==-5){pieceScoreBlack+=9;}
-			if (piece==-4){pieceScoreBlack+=3;}
-			if (piece==-3){pieceScoreBlack+=3;}
-			if (piece==-2){pieceScoreBlack+=5;}
-			if (piece==-1){pieceScoreBlack+=1;}
-			if (piece== 1){pieceScoreWhite+=1;}
-			if (piece== 2){pieceScoreWhite+=5;}
-			if (piece== 3){pieceScoreWhite+=3;}
-			if (piece== 4){pieceScoreWhite+=3;}
-			if (piece== 5){pieceScoreWhite+=9;}
-			
-			if (piece==-1){nrBlackPawns+=1;}
-			if (piece== 1){nrWhitePawns+=1;}
-			
-		}
-	}
-	
-	
-	
 	/********************
 	** PST from Tuning **
 	********************/
 	
 	int PST_Pawn_mg[8][8]={
-	{  0,  0,  0,  0,  0,  0,  0,  0},
+	{300,300,300,300,300,300,300,300},
 	{180, 99,180,177,162, -6,153, -6},
 	{ 39, 48, 72, 84, 90,111, 90, 66},
 	{ 15, -3, -6,  9, 42, 33, 36, 12},
@@ -124,7 +88,7 @@ void oracle(int board[8][8],unsigned long long int key){
 
 
 	int PST_Pawn_eg[8][8]={
-	{  0,  0,  0,  0,  0,  0,  0,  0},
+	{300,300,300,300,300,300,300,300},
 	{147,141,156,102,138,162, 84,120},
 	{117,111,120,108, 69, 69, 96,105},
 	{ 57, 72, 60, 33, 30, 30, 54, 45},
@@ -296,9 +260,16 @@ void oracle(int board[8][8],unsigned long long int key){
 	/******************************
 	*** Only one pawn remaining ***
 	******************************/
-
 	
-	if (nrWhitePawns+nrBlackPawns==1){
+	int nrPawns=0,piece;
+	for (int col=0;col<8;col++){
+		for (int row=0;row<8;row++){
+			piece=board[col][row];
+			if (abs(piece)==1){nrPawns+=1;}
+		}
+	}
+	
+	if (nrPawns==1){
 		int colPawn;
 		int rowPawn;
 		int colorPawn;

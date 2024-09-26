@@ -16,14 +16,13 @@
 ***************/
 
 unsigned int rootBestMove;
-const float INF=10000000000.;
-
+const int INF=100000000;
+bool exitSearch;
 
 /******************************
 *** for evaluation / oracle ***
 ******************************/
 
-int randomness=1;
 //long long int pieceSquareTable[6+1+6][8][8]={0};  // long long necessary to add it to newKeyy
 long long int PST_mg[6+1+6][8][8]={0};  // long long necessary to add it to newKeyy
 long long int PST_eg[6+1+6][8][8]={0};  // long long necessary to add it to newKeyy
@@ -123,8 +122,8 @@ const long long int hashTurnNumber=217122680661300;
 
 
 const int hashMoveOrderingTableSize= 12700000;  // 8+2=10 Byte per entry
-long long int hashMoveOrderingTable_hash[12700000];    // must be the same number as above
-unsigned short int hashMoveOrderingTable_moveID[12700000];      // must be the same number as above
+long long int ht_hash[12700000];         // the exact hash
+unsigned short int ht_moveID[12700000];  // the bestMove (only the first 16 bits)
 // first column to store the exact hash, to detect hash collisions
 // second column to store the id of a move
 

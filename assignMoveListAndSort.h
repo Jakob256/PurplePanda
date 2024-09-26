@@ -26,7 +26,7 @@ const int dy_LIST[16]={ 1,-1, 0, 0, 1,-1, 1,-1,-1,+1,-2,+2,-2,+2,-1,+1};
 
 
 
-void assignMoveListAndSort (int board[8][8],unsigned long long int key, unsigned int moveList[], int sortMoves, unsigned short int thisMoveFirst=0){
+void assignMoveListAndSort (int board[8][8],unsigned long long int key, unsigned int moveList[], bool sortMoves, unsigned short int thisMoveFirst=0){
 	// The heart of any chess engine!
 	
 	// all legal moves are assigned to "moveList"
@@ -72,10 +72,12 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, unsigned
 	
 	bool isAttacked[8][8];
 	bool isPawnAttacked[8][8];
+	bool defendTable[8][8];
 	for (int col=0;col<8;col++){
 		for (int row=0;row<8;row++){
 			isAttacked[col][row]=false;
 			isPawnAttacked[col][row]=false;
+			defendTable[col][row]=false;
 		}
 	}
 	
@@ -239,14 +241,14 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, unsigned
 			if (piece*turn<=0){continue;} // there is indeed a piece of the right color here
 			
 			if (abs(piece)==3 && pinnedDirections[col][row]==-1){// knight
-				targetRow=row-2;targetCol=col-1;endpiece=board[targetCol][targetRow]; if (targetRow >=0 && targetCol >=0 && piece*endpiece<=0){	moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}
-				targetRow=row-2;targetCol=col+1;endpiece=board[targetCol][targetRow]; if (targetRow >=0 && targetCol <=7 && piece*endpiece<=0){	moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}
-				targetRow=row-1;targetCol=col-2;endpiece=board[targetCol][targetRow]; if (targetRow >=0 && targetCol >=0 && piece*endpiece<=0){	moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}
-				targetRow=row-1;targetCol=col+2;endpiece=board[targetCol][targetRow]; if (targetRow >=0 && targetCol <=7 && piece*endpiece<=0){	moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}
-				targetRow=row+1;targetCol=col-2;endpiece=board[targetCol][targetRow]; if (targetRow <=7 && targetCol >=0 && piece*endpiece<=0){	moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}
-				targetRow=row+1;targetCol=col+2;endpiece=board[targetCol][targetRow]; if (targetRow <=7 && targetCol <=7 && piece*endpiece<=0){	moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}
-				targetRow=row+2;targetCol=col-1;endpiece=board[targetCol][targetRow]; if (targetRow <=7 && targetCol >=0 && piece*endpiece<=0){	moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}
-				targetRow=row+2;targetCol=col+1;endpiece=board[targetCol][targetRow]; if (targetRow <=7 && targetCol <=7 && piece*endpiece<=0){	moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}
+				targetRow=row-2;targetCol=col-1; if (targetRow >=0 && targetCol >=0 ){ defendTable[targetCol][targetRow]=true; endpiece=board[targetCol][targetRow]; if (piece*endpiece<=0){ moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}}
+				targetRow=row-2;targetCol=col+1; if (targetRow >=0 && targetCol <=7 ){ defendTable[targetCol][targetRow]=true; endpiece=board[targetCol][targetRow]; if (piece*endpiece<=0){ moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}}
+				targetRow=row-1;targetCol=col-2; if (targetRow >=0 && targetCol >=0 ){ defendTable[targetCol][targetRow]=true; endpiece=board[targetCol][targetRow]; if (piece*endpiece<=0){ moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}}
+				targetRow=row-1;targetCol=col+2; if (targetRow >=0 && targetCol <=7 ){ defendTable[targetCol][targetRow]=true; endpiece=board[targetCol][targetRow]; if (piece*endpiece<=0){ moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}}
+				targetRow=row+1;targetCol=col-2; if (targetRow <=7 && targetCol >=0 ){ defendTable[targetCol][targetRow]=true; endpiece=board[targetCol][targetRow]; if (piece*endpiece<=0){ moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}}
+				targetRow=row+1;targetCol=col+2; if (targetRow <=7 && targetCol <=7 ){ defendTable[targetCol][targetRow]=true; endpiece=board[targetCol][targetRow]; if (piece*endpiece<=0){ moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}}
+				targetRow=row+2;targetCol=col-1; if (targetRow <=7 && targetCol >=0 ){ defendTable[targetCol][targetRow]=true; endpiece=board[targetCol][targetRow]; if (piece*endpiece<=0){ moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}}
+				targetRow=row+2;targetCol=col+1; if (targetRow <=7 && targetCol <=7 ){ defendTable[targetCol][targetRow]=true; endpiece=board[targetCol][targetRow]; if (piece*endpiece<=0){ moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;}}
 			}
 			
 			
@@ -264,6 +266,7 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, unsigned
 					for (int j=1; j<8; j++){
 						targetRow=row+dy*j;targetCol=col+dx*j;endpiece=board[targetCol][targetRow]; 
 						if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7){ // target square on board
+							defendTable[targetCol][targetRow]=true;
 							if (endpiece==0){moveList[found+1]=col+row*8+targetCol*64+targetRow*512;found++;}
 							if (piece*endpiece<0){moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;break;}
 							if (piece*endpiece>0){break;}
@@ -285,6 +288,7 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, unsigned
 					for (int j=1; j<8; j++){
 						targetRow=row+dy*j;targetCol=col+dx*j;endpiece=board[targetCol][targetRow]; 
 						if (targetRow>=0 && targetRow <=7 && targetCol>=0 && targetCol <=7){ // target square on board
+							defendTable[targetCol][targetRow]=true;
 							if (endpiece==0){moveList[found+1]=col+row*8+targetCol*64+targetRow*512;found++;}
 							if (piece*endpiece<0){moveList[found+1]=col+row*8+targetCol*64+targetRow*512+abs(endpiece)*32768;found++;break;}
 							if (piece*endpiece>0){break;}
@@ -320,6 +324,7 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, unsigned
 
 				//check if left capture is possible
 				if (col>=1){
+					defendTable[col-1][row+turn]=true;
 					endpiece=board[col-1][row+turn];
 					dir=3-(turn+1)/2;
 					if (endpiece*piece<0 && (pinnedDirections[col][row]==-1 || pinnedDirections[col][row]==dir)){ // there is something to capture and not pinned or pinned in the right direction
@@ -336,6 +341,7 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, unsigned
 
 				//check if right capture is possible
 				if (col<=6){
+					defendTable[col+1][row+turn]=true;
 					endpiece=board[col+1][row+turn];
 					dir=2+(turn+1)/2;
 					if (endpiece*piece<0 && (pinnedDirections[col][row]==-1 || pinnedDirections[col][row]==dir)){ // there is something to capture and not pinned or pinned in the right direction
@@ -437,15 +443,14 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, unsigned
 	**** 9. adding king moves ****
 	*****************************/
 
-	targetRow=kingRow-1;targetCol=kingCol-1;endpiece=board[targetCol][targetRow]; if (targetRow>=0 && targetCol>=0 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}
-	targetRow=kingRow-1;targetCol=kingCol+0;endpiece=board[targetCol][targetRow]; if (targetRow>=0                 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}
-	targetRow=kingRow-1;targetCol=kingCol+1;endpiece=board[targetCol][targetRow]; if (targetRow>=0 && targetCol<=7 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}
-	targetRow=kingRow+0;targetCol=kingCol-1;endpiece=board[targetCol][targetRow]; if (                targetCol>=0 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}
-	targetRow=kingRow+0;targetCol=kingCol+1;endpiece=board[targetCol][targetRow]; if (                targetCol<=7 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}
-	targetRow=kingRow+1;targetCol=kingCol-1;endpiece=board[targetCol][targetRow]; if (targetRow<=7 && targetCol>=0 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}
-	targetRow=kingRow+1;targetCol=kingCol+0;endpiece=board[targetCol][targetRow]; if (targetRow<=7                 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}
-	targetRow=kingRow+1;targetCol=kingCol+1;endpiece=board[targetCol][targetRow]; if (targetRow<=7 && targetCol<=7 && turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}
-	
+	targetRow=kingRow-1;targetCol=kingCol-1; if (targetRow>=0 && targetCol>=0 ){ defendTable[targetCol][targetRow]=true; endpiece=board[targetCol][targetRow]; if (turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}}
+	targetRow=kingRow-1;targetCol=kingCol+0; if (targetRow>=0                 ){ defendTable[targetCol][targetRow]=true; endpiece=board[targetCol][targetRow]; if (turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}}
+	targetRow=kingRow-1;targetCol=kingCol+1; if (targetRow>=0 && targetCol<=7 ){ defendTable[targetCol][targetRow]=true; endpiece=board[targetCol][targetRow]; if (turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}}
+	targetRow=kingRow+0;targetCol=kingCol-1; if (                targetCol>=0 ){ defendTable[targetCol][targetRow]=true; endpiece=board[targetCol][targetRow]; if (turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}}
+	targetRow=kingRow+0;targetCol=kingCol+1; if (                targetCol<=7 ){ defendTable[targetCol][targetRow]=true; endpiece=board[targetCol][targetRow]; if (turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}}
+	targetRow=kingRow+1;targetCol=kingCol-1; if (targetRow<=7 && targetCol>=0 ){ defendTable[targetCol][targetRow]=true; endpiece=board[targetCol][targetRow]; if (turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}}
+	targetRow=kingRow+1;targetCol=kingCol+0; if (targetRow<=7                 ){ defendTable[targetCol][targetRow]=true; endpiece=board[targetCol][targetRow]; if (turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}}
+	targetRow=kingRow+1;targetCol=kingCol+1; if (targetRow<=7 && targetCol<=7 ){ defendTable[targetCol][targetRow]=true; endpiece=board[targetCol][targetRow]; if (turn*endpiece<=0 && !isAttacked[targetCol][targetRow]){ moveList[found+1]=kingCol+kingRow*8+targetCol*64+targetRow*512+32768*abs(endpiece);found++;}}
 	
 	/*********************************
 	**** 10. adding castles moves ****
@@ -582,9 +587,17 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, unsigned
 
 
 		quickEvals[i-1]=100*endPieceValue                                                 // bonus for capturing a piece
-						-100*startPieceValue*(isAttacked[endCol][endRow])                 // bonus if the square we are moving to is not attacked
-						+300*(startPieceValue>=5)*isAttacked[startCol][startRow]          // bonus if we move a queen or a rook and the startsquare was attacked
-						+300*(startPieceValue==3)*isPawnAttacked[startCol][startRow]      // bonus if we move a bishop or knight and the startsquare was attacked by a pawn
+						-100*startPieceValue * isAttacked[endCol][endRow]                 // bonus if the square we are moving to is not attacked
+						+300*(startPieceValue>=5 && isAttacked[startCol][startRow])         // bonus if we move a queen or a rook and the startsquare was attacked
+						+300*(startPieceValue==3 && isPawnAttacked[startCol][startRow])      // bonus if we move a bishop or knight and the startsquare was attacked by a pawn
+						+300*(startPieceValue==3 && 
+							isAttacked[startCol][startRow] && 
+							!isPawnAttacked[startCol][startRow] && 
+							!defendTable[startCol][startRow])
+							// bonus if we move a bishop or knight and the startsquare was attacked by a non-pawn, 
+							// but the piece is not defended
+						+100*(startPieceValue==1 && isAttacked[startCol][startRow] &&
+							!defendTable[startCol][startRow] && defendTable[endCol][endRow])
 						+PST_gain;
 						
 						

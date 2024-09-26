@@ -25,7 +25,8 @@ Alternatively, find the executables under "Releases". You will have to copy the 
 
 | Version |    Date     | Score against <p> previous version | [CCRL](https://computerchess.org.uk/ccrl/404/) rating | Changes |
 |:-------:|:-----------:|:---------------:|:-----:|:---     |
-|  17     | 20 Jun 2024 | 60% (+70 Elo)   |       |- move representation changed to a single 32-bit number <br> - quiescence search increased from usually 2 ply to always 4 ply <br> - moveordering additionally uses PST <br> - moves to leaf nodes have to be the top ranked move after moveordering <br> - middlegame PST is updated before the search to reflect mobility for rooks and bishops |
+|  18     | 26 Sep 2024 | 61% (+78 Elo)   |       |- removal of random variation to the static evaluation <br> - Null Move Pruning with R=2 in (very) likely fail-high nodes<br> - moveordering incorporats defended squares <br> - late quiet moves at depth2go=2 are reduced in likely fail-low nodes |
+|  17     | 20 Jun 2024 | 60% (+70 Elo)   | 1646  |- move representation changed to a single 32-bit number <br> - quiescence search increased from usually 2 ply to always 4 ply <br> - moveordering additionally uses PST <br> - moves to leaf nodes have to be the top ranked move after moveordering <br> - middlegame PST is updated before the search to reflect mobility for rooks and bishops |
 |  16     | 12 Apr 2024 | 56% (+42 Elo)   | 1595  |- tempo bonus |
 |  15     | 29 Mar 2024 | 62% (+85 Elo)   |       |- tapered evaluation <br> - tuning of Piece-Square Tables for middle- and endgame based on Texel's tuning method on games from [lichess.org](https://lichess.org/)|
 |  14     | 20 Jan 2024 | 58% (+56 Elo)   | 1460  |- improved move ordering; used at every depth <br> - more aggressive pruning at frontier nodes <br> - 3men Distance-To-Mate tablebase used by interior node recognizer|
