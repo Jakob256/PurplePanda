@@ -73,11 +73,13 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, unsigned
 	bool isAttacked[8][8];
 	bool isPawnAttacked[8][8];
 	bool defendTable[8][8];
+	bool isPawnDefended[8][8];
 	for (int col=0;col<8;col++){
 		for (int row=0;row<8;row++){
 			isAttacked[col][row]=false;
 			isPawnAttacked[col][row]=false;
 			defendTable[col][row]=false;
+			isPawnDefended[col][row]=false;
 		}
 	}
 	
@@ -325,6 +327,7 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, unsigned
 				//check if left capture is possible
 				if (col>=1){
 					defendTable[col-1][row+turn]=true;
+					isPawnDefended[col-1][row+turn]=true;
 					endpiece=board[col-1][row+turn];
 					dir=3-(turn+1)/2;
 					if (endpiece*piece<0 && (pinnedDirections[col][row]==-1 || pinnedDirections[col][row]==dir)){ // there is something to capture and not pinned or pinned in the right direction
@@ -342,6 +345,7 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, unsigned
 				//check if right capture is possible
 				if (col<=6){
 					defendTable[col+1][row+turn]=true;
+					isPawnDefended[col+1][row+turn]=true;
 					endpiece=board[col+1][row+turn];
 					dir=2+(turn+1)/2;
 					if (endpiece*piece<0 && (pinnedDirections[col][row]==-1 || pinnedDirections[col][row]==dir)){ // there is something to capture and not pinned or pinned in the right direction
@@ -538,16 +542,13 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, unsigned
 	
 	
 	if (sortMoves==false || found <=1){return;} // turning off moveordering
+	
 
-
-	vector<int> quickEvals(found, 0);
-	vector<int> PSTEvals(found, 0);
-	
-	
-	int startPieceValue,endPieceValue,startCol,endCol,endRow,PST_gain;
-	
-	
+	int startPieceValue,endPieceValue,startCol,endCol,endRow,PST_gain,quickEval;
 	unsigned int move;
+	int pieceValues[13]={10,10,3,3,5,1,0,1,5,3,3,10,10};
+	
+	vector<pair<int, unsigned int>> eval_move_pairs(found);
 	
 	for (int i=1; i<=moveList[0]; i++){
 		move=moveList[i];
@@ -559,86 +560,47 @@ void assignMoveListAndSort (int board[8][8],unsigned long long int key, unsigned
 		startpiece=board[startCol][startRow];
 		endpiece=board[endCol][endRow];
 		
-		startPieceValue=abs(startpiece);
-		if (startPieceValue>=5){startPieceValue=10;}
-		if (startPieceValue==2){startPieceValue=5;}
-		if (startPieceValue==4){startPieceValue=3;}
-
-		endPieceValue=abs(endpiece);
-		if (endPieceValue>=5){endPieceValue=10;} // however, endpiece==King should not be possible
-		if (endPieceValue==2){endPieceValue=5;}
-		if (endPieceValue==4){endPieceValue=3;}
+		startPieceValue=pieceValues[startpiece+6];
+		endPieceValue=pieceValues[endpiece+6];
 		
 		// pure PST difference (this is only an estimated, since we don't use the current gamePhase)
 		PST_gain=PST_average[6+startpiece][endCol][endRow]*turn-PST_average[6+startpiece][startCol][startRow]*turn;
 		
 		
-		// I want: 
-		// + 100* score of captured piece
-		// - 100* score of moveing Piece if the target square is attacked
-		// + 300* [moving piece is a queen or rook and it was attacked]
-		// + 300* [moving piece is a bishop or knight and it was attacked by a pawn]
-		// + difference of the average PST from moving that piece
-		// + 10000 if move=thisMoveFirst
 		
-		// before calculating these quickEvals, one could count how often a square is attacked ...
-		// One could also quickly check for checks
-		
-
-
-		quickEvals[i-1]=100*endPieceValue                                                 // bonus for capturing a piece
-						-100*startPieceValue * isAttacked[endCol][endRow]                 // bonus if the square we are moving to is not attacked
-						+300*(startPieceValue>=5 && isAttacked[startCol][startRow])         // bonus if we move a queen or a rook and the startsquare was attacked
-						+300*(startPieceValue==3 && isPawnAttacked[startCol][startRow])      // bonus if we move a bishop or knight and the startsquare was attacked by a pawn
-						+300*(startPieceValue==3 && 
-							isAttacked[startCol][startRow] && 
-							!isPawnAttacked[startCol][startRow] && 
-							!defendTable[startCol][startRow])
-							// bonus if we move a bishop or knight and the startsquare was attacked by a non-pawn, 
-							// but the piece is not defended
-						+100*(startPieceValue==1 && isAttacked[startCol][startRow] &&
-							!defendTable[startCol][startRow] && defendTable[endCol][endRow])
-						+PST_gain;
-						
-						
-		PSTEvals[i-1]=PST_gain;
+		quickEval=100*endPieceValue                                           // bonus for capturing a piece
+			-100*startPieceValue * isAttacked[endCol][endRow]                 // bonus if the square we are moving to is not attacked
+			+300*(startPieceValue>=5 && isAttacked[startCol][startRow])       // bonus if we move a queen or a rook and the startsquare was attacked
+			+300*(startPieceValue==3 && isPawnAttacked[startCol][startRow])   // bonus if we move a bishop or knight and the startsquare was attacked by a pawn
+			+300*(startPieceValue==3 && isAttacked[startCol][startRow] && 
+				!isPawnAttacked[startCol][startRow] && !defendTable[startCol][startRow])
+				// bonus if we move a bishop or knight and the startsquare was attacked by a non-pawn, 
+				// but the piece is not defended
+			+100*(startPieceValue==1 && isAttacked[startCol][startRow] &&
+				!defendTable[startCol][startRow] && defendTable[endCol][endRow])
+			+PST_gain
+			+10000*(move%65536==thisMoveFirst)                                // hashmove
+			+(move>4095)*20                                                   // captures get an additional bonus
+			+100*(startPieceValue==1 && isAttacked[endCol][endRow] && 
+				(!isPawnAttacked[endCol][endRow]) && (isPawnDefended[endCol][endRow]))
+			;
 		
 		
-		//printMove(moveList[i]);
-		//cout << ":  "<<quickEvals[i]<<"\n";
+		eval_move_pairs[i-1] = {-quickEval, moveList[i]};
 	}
 	
-	if (thisMoveFirst!=0){
-		for (int i=1; i<=moveList[0]; i++){
-			quickEvals[i-1]+=10000*(moveList[i]%65536==thisMoveFirst);
-		}
-	}
+
 	
 	
 	/*******************************************
 	**** 13. Moveordering: reordering moves ****
 	*******************************************/
 	
-	vector<pair<int, int>> value_index_pairs(found);
-    for (int i=0; i<found; i++) {
-        value_index_pairs[i] = {-quickEvals[i], i};
-    }
-
-    sort(value_index_pairs.begin(), value_index_pairs.end());
-
-	unsigned int moveListCopy[250];
-	for (int i=1;i<=found;i++){
-		moveListCopy[i]=moveList[i];
+	sort(eval_move_pairs.begin(), eval_move_pairs.end());
+	
+	for (int i=0; i<found; i++){
+		moveList[i+1]=eval_move_pairs[i].second;
 	}
-	
-	int filled=1;
-    for (const auto& pair : value_index_pairs) {
-        //cout << pair.second << " ";
-		moveList[filled]=moveListCopy[pair.second+1];filled++;
-    }
-	
-	moveList[moveList[0]+1]=moveList[found+1];// fixing the check bit
-	
 	
 	return;
 

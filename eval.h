@@ -7,8 +7,8 @@
 #include "assignMakeMove.h"
 #include "assignUndoMove.h"
 #include "newKey.h"
+#include "newHash.h"
 #include "globalVariables.h"
-//#include "moveID.h"
 
 /************
 *** Guard ***
@@ -21,7 +21,7 @@
 *** Let's go ***
 ***************/
 
-int eval(int board[8][8],unsigned long long int key, long long int hash, int atDepth, int depth2Go, int alpha, int beta, int endTime, int maxDepth){
+int eval(int board[8][8],unsigned long long int key, long long int hash, int atDepth, int depth2Go, int alpha, int beta, int endTime, int maxDepth, int captures){
 	
 	nodes++;
 	int turn=-1+2*(key%2);
@@ -41,11 +41,38 @@ int eval(int board[8][8],unsigned long long int key, long long int hash, int atD
 		for (int i=0;i<100;i++){
 			if (hash==previous100PositionHashes[i]){howOftenOccured++;}
 		}
-		if (howOftenOccured>=2){return 0.;} // occured already 2 times -> now 3 times
+		if (howOftenOccured>=2){return 0;} // occured already 2 times -> now 3 times
 	}
 	
 	if (atDepth>0 && nrPieces<=3){ // 3men Tablebase
 		return stationaryEval(board,key);
+	}
+
+	/*******************************
+	***** Repetition detection *****
+	*******************************/
+	
+	// if this position was reached earlier in the tree, consider it drawn
+	
+	branch_hashes[atDepth]=hash;
+	if (atDepth>=4){
+		for (int d=atDepth-4;d>=0;d-=2){
+			if (branch_hashes[d]==hash){
+				return 0;
+			}
+		}
+	}
+	
+	/****************************
+	***** Search extensions *****
+	****************************/
+	
+	// 4 captures extend the search by 2 ply. This is allowed once
+	
+	if (captures==4 && depth2Go>=2){
+		captures=-123;
+		depth2Go+=2;
+		maxDepth+=2;
 	}
 	
 	
@@ -53,20 +80,22 @@ int eval(int board[8][8],unsigned long long int key, long long int hash, int atD
 	***** Is the current position so good we can abort? *****
 	********************************************************/
 
-	// currently, when we are at "depth2Go==1", we will only make one move and then evaluate, unless this move is a capture.
-	// so: if we are in a very good position, any non-capture move will cause a cutoff. Therefore, we don't need the moveGeneration at all.
-	// but maybe, we should at least check that we are not in check, otherwise there might be stupid consequences... so:
+	// when we are at "depth2Go<=3" and we are in a very good position, we will prune this branch,
+	// assuming we are not in check. However, it seems cutting off only is beneficial, if we don't
+	// risk getting to the same position with iterative deepening again but then don't have a hashmove ready
+	
 	
 	int standingPat=stationaryEval(board,key);
-	if ((depth2Go==1) && (atDepth>=6)){
-		if ((turn==+1 && standingPat>= beta)||(turn==-1 && standingPat<= alpha)){
+	
+	int margins[4]={0,0,250,500};
+	if (depth2Go>=1 && depth2Go<=3 && atDepth>=6){
+		if ((turn==+1 && standingPat>= beta+margins[depth2Go])||(turn==-1 && standingPat<= alpha-margins[depth2Go])){
 			if (isKingInCheck(board,turn,0,0)==0){
 				return standingPat+turn;
 			}
 		}
 	}
-	// it seems cutting off only is beneficial, if I don't risk getting to the same position with iterative deepening again but then don't have a lookup ready
-
+	
 	/***************************
 	***** Nullmove pruning *****
 	***************************/
@@ -81,7 +110,7 @@ int eval(int board[8][8],unsigned long long int key, long long int hash, int atD
 				newKeyy=newKey(board,key,0);
 				newHashh=newHash(board,key,hash,0);
 				//using R=2
-				score=eval(board,newKeyy,newHashh,atDepth+1,depth2Go-1-2,alpha,beta,endTime,maxDepth-2);
+				score=eval(board,newKeyy,newHashh,atDepth+1,depth2Go-1-2,alpha,beta,endTime,maxDepth-2,captures);
 				
 				if ((score>beta && turn==1)||(score<alpha && turn==-1)){
 					return score;
@@ -96,37 +125,35 @@ int eval(int board[8][8],unsigned long long int key, long long int hash, int atD
 	*************************************************/
 	
 	unsigned short int thisMoveFirst=0;
-	bool doHashMoves=false;
+	bool doHashMoves=(atDepth<=5 && atDepth>0);
 	
 	int hash4moveOrder;
 	long long int hashOfTable;
-	unsigned short int moveIDD;
 	
-	if (atDepth<=5 && atDepth>0){
-		doHashMoves=true;
-	}
 	
 	if (atDepth==0){  // move the root best move to first position
 		thisMoveFirst=rootBestMove&0xffff;
 	} else if (doHashMoves){
-		hash4moveOrder=int(abs(hash%hashMoveOrderingTableSize));
+		hash4moveOrder=int(abs(hash%ht_size));
 		hashOfTable=ht_hash[hash4moveOrder];
 		
 		if (hashOfTable==hash){// we have the exact same hash stored!
-			thisMoveFirst =ht_moveID[hash4moveOrder];
+			thisMoveFirst =ht_moveShort[hash4moveOrder];
 			hashhits++;
 		}
 	}
 	
+	//so, if we have no hashmove but still a way to go, we will do a shallow search to find a good first move
+	if (thisMoveFirst==0 && depth2Go>=4){
+		eval(board,key,hash,atDepth,depth2Go-2,-INF, INF, endTime, atDepth+4,-123);
+		thisMoveFirst=evalBestMove;
+	}
 	
 	if (clock()>endTime){exitSearch=true;return 0;}	
 	unsigned int moveList[250];
-	assignMoveListAndSort(board,key,moveList,1,thisMoveFirst);
+	assignMoveListAndSort(board,key,moveList,true,thisMoveFirst);
 	
-	//if (moveList[moveList[0]+1]==0 &&  isKingInCheck(board,turn,0,0)){cout << "this should not happen!\n";}
-	//if (moveList[moveList[0]+1]!=0 && !isKingInCheck(board,turn,0,0)){cout << "this should not happen!\n";}
-	
-	if (moveList[0]==0){ //there is a final evaluation
+	if (moveList[0]==0){ //there are no legal moves -> checkmate or stalemate
 		if (moveList[moveList[0]+1]==1){ // we are in check
 			return -turn*100000;
 		} else {
@@ -177,13 +204,13 @@ int eval(int board[8][8],unsigned long long int key, long long int hash, int atD
 		
 		
 		if (move<=4095){ // 7*(1+8+64+512): no capture or anything
-			score=eval(board,newKeyy,newHashh,atDepth+1,depth2Go-1,alpha,beta,endTime,maxDepth);
+			score=eval(board,newKeyy,newHashh,atDepth+1,depth2Go-1,alpha,beta,endTime,maxDepth,captures);
 			
 		} else {
 			if (depth2Go>1){
-				score=eval(board,newKeyy,newHashh,atDepth+1,depth2Go-1,alpha,beta,endTime,maxDepth);
+				score=eval(board,newKeyy,newHashh,atDepth+1,depth2Go-1,alpha,beta,endTime,maxDepth,captures+1);
 			} else {
-				score=eval(board,newKeyy,newHashh,atDepth+1,1,alpha,beta,endTime,maxDepth);
+				score=eval(board,newKeyy,newHashh,atDepth+1,1,alpha,beta,endTime,maxDepth,captures+1);
 			}	
 		}
 		
@@ -201,12 +228,12 @@ int eval(int board[8][8],unsigned long long int key, long long int hash, int atD
 		
 		if ((turn==1 && score >beta) || (turn==-1 && score <alpha)){ // "beta-cutoff"
 			
-			if (doHashMoves){
+			if (doHashMoves && !exitSearch){
 				ht_hash[hash4moveOrder]=hash;
-				ht_moveID[hash4moveOrder]=move& 0xffff; 
+				ht_moveShort[hash4moveOrder]=move& 0xffff; 
 				hashstored++;
 			}
-			
+			evalBestMove=move;
 			return score;
 		}
 		
@@ -231,12 +258,12 @@ int eval(int board[8][8],unsigned long long int key, long long int hash, int atD
 	// store best move if no cutoff occured
 	if (doHashMoves && !exitSearch){
 		ht_hash[hash4moveOrder]=hash;
-		ht_moveID[hash4moveOrder]=moveList[bestMoveIndex]& 0xffff;
+		ht_moveShort[hash4moveOrder]=moveList[bestMoveIndex]& 0xffff;
 		hashstored++;
 	}
 
-
 	
+	evalBestMove=moveList[bestMoveIndex];
 	return bestScore;
 }	
 

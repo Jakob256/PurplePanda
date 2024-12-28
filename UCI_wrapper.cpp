@@ -40,13 +40,17 @@ using namespace std;
 
 
 int main() {
-	/* initialize random seed: */
-	srand (time(NULL));
+	srand(time(NULL)); // initialize random seed
 	
-	int resetBoard[8][8]={2,1,0,0,0,0,-1,-2,3,1,0,0,0,0,-1,-3,4,1,0,0,0,0,-1,-4,5,1,0,0,0,0,-1,-5,6,1,0,0,0,0,-1,-6,4,1,0,0,0,0,-1,-4,3,1,0,0,0,0,-1,-3,2,1,0,0,0,0,-1,-2};
-	int board[8][8]={2,1,0,0,0,0,-1,-2,3,1,0,0,0,0,-1,-3,4,1,0,0,0,0,-1,-4,5,1,0,0,0,0,-1,-5,6,1,0,0,0,0,-1,-6,4,1,0,0,0,0,-1,-4,3,1,0,0,0,0,-1,-3,2,1,0,0,0,0,-1,-2};
+	int resetBoard[8][8],board[8][8];
+	assignFen2Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq",board);
+	assignFen2Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq",resetBoard);
+	
 	unsigned long long int resetKey=0b1000000000000100000000000001100010000000100000000011111;
 	unsigned long long int key=     0b1000000000000100000000000001100010000000100000000011111;
+	
+	for (int i=0;i<100;i++){previous100PositionHashes[i]=0;}
+	
 	oracle(board,key);
 	
 	int maxMillisecondsTime2Think=30000;   //  <<<---- this parameter could be changed!!!
@@ -64,18 +68,37 @@ int main() {
 		std::getline(std::cin, input);
 
 		if (input=="uci"){
-			cout << "id name Purple Panda 18\nid author J. Steininger\nuciok\n";
+			cout << "id name Purple Panda 19\nid author J. Steininger\nuciok\n";
 			
 		} else if (input=="d"){
 			plotBoard(board);
 			cout << "fen: ";
 			printFen(board,key);
+			cout << "\n";
 			printKey(key);
 
 			oracle(board,key);
 			key=setBonusOfKey(board,key);
 			cout << "Stationary eval: "<< stationaryEval(board,key)<< " cp\n";
 			
+		} else if (input=="hashmove"){
+			long long int hash=hashFunction(board,key);
+			int hash4moveOrder=int(abs(hash%ht_size));
+			long long int hashOfTable=ht_hash[hash4moveOrder];
+			int moveShort=0;
+			
+			if (hashOfTable==hash){// we have the exact same hash stored!
+				moveShort=ht_moveShort[hash4moveOrder];	
+			}
+			
+			unsigned int moveList[250];
+			assignMoveListAndSort(board,key,moveList,true,moveShort);
+			if (moveList[1]%65536==moveShort){
+				cout << "hashmove: "; printMove(moveList[1]); cout <<"\n";
+			} else {
+				cout << "no hashmove found\n";
+			}
+		
 		} else if (input=="pst"){
 			oracle(board,key);
 			for (int color=1;color>=-1;color-=2){
@@ -95,34 +118,15 @@ int main() {
 				}
 			}
 			
-		} else if (input=="debug"){
-			cout << "degubbing:\n\n";
-			plotBoard(board);
-			
-			// here can be random code
-			unsigned int moveList[250];
-			int asd1,asd2;
-			
-			asd1=clock();
-			for (int i=0;i<1000*1000;i++){
-				assignMoveListAndSort(board,key,moveList,false);
-			}
-			asd2=clock();
-			cout << "duration: "<<asd2-asd1<< "\n";
-			
-				
 		} else if (input=="moveorder"){
 			unsigned int moveList[250];
 			assignMoveListAndSort(board,key,moveList,true);
 			printMoveList(moveList);
 			
-		} else if (input=="uciready"){
+		} else if (input=="uciready" || input=="isready"){
 			cout << "readyok\n";
 			
-		} else if (input=="isready"){
-			cout << "readyok\n";
-			
-		} else if (input=="quit" || input=="exit"){
+		} else if (input=="quit" || input=="exit" || input=="q"){
 			break;	
 			
 		} else if (input.substr(0,17)=="position startpos"){

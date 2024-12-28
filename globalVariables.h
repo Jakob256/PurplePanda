@@ -15,7 +15,7 @@
 *** Let's go ***
 ***************/
 
-unsigned int rootBestMove;
+unsigned int rootBestMove,evalBestMove;
 const int INF=100000000;
 bool exitSearch;
 
@@ -23,7 +23,6 @@ bool exitSearch;
 *** for evaluation / oracle ***
 ******************************/
 
-//long long int pieceSquareTable[6+1+6][8][8]={0};  // long long necessary to add it to newKeyy
 long long int PST_mg[6+1+6][8][8]={0};  // long long necessary to add it to newKeyy
 long long int PST_eg[6+1+6][8][8]={0};  // long long necessary to add it to newKeyy
 int PST_average[6+1+6][8][8]={0};  // only used for moveordering
@@ -39,7 +38,8 @@ int nodes,staticeval,movegen,hashstored,hashhits;
 ** for avoiding repetitions **
 *****************************/
 
-long long int previous100PositionHashes[100]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+long long int previous100PositionHashes[100];
+long long int branch_hashes[123];
 
 /**********************
 ** hashes in general **
@@ -121,12 +121,9 @@ const long long int hashTurnNumber=217122680661300;
 ***************/
 
 
-const int hashMoveOrderingTableSize= 12700000;  // 8+2=10 Byte per entry
-long long int ht_hash[12700000];         // the exact hash
-unsigned short int ht_moveID[12700000];  // the bestMove (only the first 16 bits)
-// first column to store the exact hash, to detect hash collisions
-// second column to store the id of a move
-
+const int ht_size=12700000;                // 8+2=10 Byte per entry
+long long int ht_hash[12700000];           // the exact hash
+unsigned short int ht_moveShort[12700000]; // the best move in that position (only the first 16 bits)
 
 
 

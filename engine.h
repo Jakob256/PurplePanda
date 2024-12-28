@@ -90,6 +90,20 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	}
 	
 	
+	// if we have rook vs rook, we can reduce the search depth
+	int pieceSum=0;
+	int pieceProd=1;
+	for (int col=0;col<8;col++){
+		for (int row=0;row<8;row++){
+			if (board[col][row]!=0){
+				pieceProd*=board[col][row];
+				pieceSum+=board[col][row];
+			}
+		}
+	}
+	if (nrPieces==4 && pieceProd==144 && pieceSum==0){inputDepth=8;}
+	
+	
 	/*********************************
 	***** start extensive search *****
 	*********************************/
@@ -102,7 +116,7 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 		if (depth2go>inputDepth){break;}
 		
 		maxDepth=depth2go+4;
-		evaluation=eval(board,key,hashFunction(board,key),0,depth2go,-INF,+INF,endTime,maxDepth);
+		evaluation=eval(board,key,hashFunction(board,key),0,depth2go,-INF,+INF,endTime,maxDepth,0);
 		
 		if (exitSearch){break;}
 		

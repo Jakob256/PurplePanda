@@ -105,7 +105,7 @@ void printMoveList (unsigned int moveList[]){
 		printMove(moveList[i]);
 		absCaptured=(moveList[i]>>15)&0b111;
 		if (absCaptured==1){cout << " capturing a pawn";}
-		if (absCaptured==2){cout << " capturing a roook";}
+		if (absCaptured==2){cout << " capturing a rook";}
 		if (absCaptured==3){cout << " capturing a knight";}
 		if (absCaptured==4){cout << " capturing a bishop";}
 		if (absCaptured==5){cout << " capturing a queen";}
@@ -224,7 +224,6 @@ void printFen(int board[8][8],unsigned long long int key){
 	if (key& 4){cout << "Q";}
 	if (key& 8){cout << "k";}
 	if (key&16){cout << "q";}
-	cout << "\n";
 }
 
 
