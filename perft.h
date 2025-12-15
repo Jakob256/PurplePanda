@@ -147,8 +147,7 @@ long long int perftBackground(int board[8][8], unsigned long long int key, long 
 		count=perftBackground(board,newKeyy,newHashh,depth-1,atDepth+1);
 		positions+=count;
 		if (atDepth==0){
-			printMove(moveList[i]);
-			cout <<": "<<count<<"\n";
+			cout << move2string(moveList[i])<<": "<<count<<"\n";
 		}
 		
 		assignUndoMove(board,moveList[i]);

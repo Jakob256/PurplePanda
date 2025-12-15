@@ -4,11 +4,9 @@
 
 #include <iostream>     // for input/output
 #include <bitset>       // for printing the binary representation of the "key"
-#include <vector>       // for sequences
-#include <algorithm>    // for sorting sequences
 
 #include <string>       // for fen2Board
-#include <stdlib.h>     // srand, rand
+#include <stdlib.h>     // for random openings
 #include <time.h>       // clock_t, clock, CLOCKS_PER_SEC,time
 #include <math.h>       // for abs for some reason
 
@@ -49,7 +47,7 @@ int main() {
 	unsigned long long int resetKey=0b1000000000000100000000000001100010000000100000000011111;
 	unsigned long long int key=     0b1000000000000100000000000001100010000000100000000011111;
 	
-	for (int i=0;i<100;i++){previous100PositionHashes[i]=0;}
+	for (int i=0;i<100;i++){previous100PositionHashes[i]=i;}
 	
 	oracle(board,key);
 	
@@ -68,8 +66,14 @@ int main() {
 		std::getline(std::cin, input);
 
 		if (input=="uci"){
-			cout << "id name Purple Panda 19\nid author J. Steininger\nuciok\n";
+			cout << "id name Purple Panda 20\nid author J. Steininger\n\noption name OpeningBook type check default false\nuciok\n";
 			
+		} else if (input=="setoption name OpeningBook value true"){
+			UCI_OPTION_OPENINGBOOK=true;
+		
+		} else if (input=="setoption name OpeningBook value false"){
+			UCI_OPTION_OPENINGBOOK=false;
+		
 		} else if (input=="d"){
 			plotBoard(board);
 			cout << "fen: ";
@@ -80,6 +84,13 @@ int main() {
 			oracle(board,key);
 			key=setBonusOfKey(board,key);
 			cout << "Stationary eval: "<< stationaryEval(board,key)<< " cp\n";
+			
+		} else if (input=="clear"){
+			for (int i=0; i<ht_size;i++){
+				ht_hash[i]=0;
+				ht_moveShort[i]=0;
+			}
+			cout << "hashtable cleared\n";
 			
 		} else if (input=="hashmove"){
 			long long int hash=hashFunction(board,key);
@@ -94,29 +105,26 @@ int main() {
 			unsigned int moveList[250];
 			assignMoveListAndSort(board,key,moveList,true,moveShort);
 			if (moveList[1]%65536==moveShort){
-				cout << "hashmove: "; printMove(moveList[1]); cout <<"\n";
+				cout << "hashmove: "<<move2string(moveList[1])<<"\n";
 			} else {
 				cout << "no hashmove found\n";
 			}
 		
 		} else if (input=="pst"){
 			oracle(board,key);
-			for (int color=1;color>=-1;color-=2){
-				for (int piece=1;piece<=6;piece++){
-					cout << "Piece: "<<color*piece<<"\n";
-					for (int row=7; row>=0; row--){
-						for (int col=0; col<8; col++){
-							hv=PST_average[piece*color+6][col][row]; // this shows current PST
-							if      (hv<=-100)          {cout << hv << " ";}
-							else if (hv<=-10 || hv>=100){cout << " "<< hv << " ";}
-							else if (hv<0 || hv >=10)   {cout << "  " << hv << " ";}
-							else                        {cout << "   " << hv << " ";}
-						}
-						cout <<"\n";
-					}
-					cout << "\n\n";
+			int phase24=int((key>>23)&63);
+			for (int row=7; row>=0; row--){
+				for (int col=0; col<8; col++){
+					int piece=board[col][row];
+					hv=(PST_mg[piece+6][col][row]*phase24+PST_eg[piece+6][col][row]*(24-phase24))/24;
+					if      (hv<=-100)          {cout << hv << " ";}
+					else if (hv<=-10 || hv>=100){cout << " "<< hv << " ";}
+					else if (hv<0 || hv >=10)   {cout << "  " << hv << " ";}
+					else                        {cout << "   " << hv << " ";}
 				}
+				cout <<"\n";
 			}
+			cout << "\nStationary Eval: "<< stationaryEval(board,key)<<"\n\n";
 			
 		} else if (input=="moveorder"){
 			unsigned int moveList[250];
@@ -130,7 +138,7 @@ int main() {
 			break;	
 			
 		} else if (input.substr(0,17)=="position startpos"){
-			for (int i=0;i<100;i++){previous100PositionHashes[i]=0;}  // clear previous positions
+			for (int i=0;i<100;i++){previous100PositionHashes[i]=i;}  // clear previous positions
 			
 			for (int i=0;i<8;i++){
 				for (int j=0;j<8;j++){
@@ -171,7 +179,7 @@ int main() {
 			}
 			
 		} else if (input.substr(0,12)=="position fen"){
-			for (int i=0;i<100;i++){previous100PositionHashes[i]=0;}  // clear previous positions
+			for (int i=0;i<100;i++){previous100PositionHashes[i]=i;}  // clear previous positions
 			
 			fenString=input.substr(13,input.length()-13);
 			assignFen2Board(fenString,board);
@@ -222,6 +230,11 @@ int main() {
 		*** now starting the calculation ***
 		***********************************/
 		
+		} else if (input=="go depth 0" || input=="go movetime 0"){
+			unsigned int moveList[250];
+			assignMoveListAndSort(board,key,moveList,true,0);
+			cout << "bestmove "<<move2string(moveList[1])<< "\n";
+		
 		} else if (input=="go movetime 10000"){ 	// so, the first comand on Lichess is movetime 10000 when your time is not yet ticking
 													// however, I don't want to keep the player waiting for 10 seconds. So I will reduce the
 													// thinking time to 0.5 sek, if it seems that we are communicating with lichess in the starting position.
@@ -234,9 +247,9 @@ int main() {
 				}
 			}
 			if (nrUntouchedSquares>=64-2){
-				engine(board, key, 500,1000);
+				engine(board, key, 500,1000,-1);
 			} else {
-				engine(board, key, 10000,1000);
+				engine(board, key, 10000,1000,-1);
 			}
 			
 		} else if (input.substr(0,11)=="go movetime"){			// this is for constant movetime
@@ -250,14 +263,18 @@ int main() {
 				millisecondsTime2Think=(millisecondsTime2Think%1000000)/1000;
 			}
 			
-			engine(board, key, millisecondsTime2Think,1000);
+			engine(board, key, millisecondsTime2Think,1000,-1);
 			
 		} else if (input.substr(0,8)=="go depth"){
 			depth=stoi(input.substr(9,input.length()-9));
-			engine(board, key, 1000000000,depth);			
+			engine(board, key, 1000000000,depth,-1);			
+		
+		} else if (input.substr(0,8)=="go nodes"){
+			hv=stoi(input.substr(9,input.length()-9));
+			engine(board, key, 1000000000,1000,hv);
 		
 		} else if (input=="go infinite"){ 						// used for analysis: as there is no interrupt, analysis is bounded to 10 seconds
-			engine(board, key, 10000,1000);
+			engine(board, key, 10000,1000,-1);
 			
 		} else if (input.substr(0,2)=="go"){					// this is for normal gameplay, where there might be additional increment
 			// expected input like: go wtime 120703 btime 120464 winc 1000 binc 1000
@@ -315,7 +332,7 @@ int main() {
 			if (word8=="binc"){binc=stoi(word9);}
 
 			if (word2=="empty"){ // only "go" found
-				engine(board, key, 1000,1000); // thinks for 1 second
+				engine(board, key, 1000,1000,-1); // thinks for 1 second
 				
 			} else { // there is at least wtime and btime
 				if (key%2==1){ // white's turn					
@@ -331,7 +348,7 @@ int main() {
 				}
 				
 				if (millisecondsTime2Think>maxMillisecondsTime2Think){millisecondsTime2Think=maxMillisecondsTime2Think;}
-				engine(board, key, millisecondsTime2Think,1000);
+				engine(board, key, millisecondsTime2Think,1000,-1);
 			}
 			
 		

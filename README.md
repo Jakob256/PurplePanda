@@ -19,13 +19,14 @@ Compiling "UCI_wrapper.cpp" will give you the latest PurplePanda version.
 g++ UCI_wrapper.cpp -o PurplePanda.exe -march=native -O3
 ```
 
-Alternatively, find the executables under "Releases". You will have to copy the two provided dll files also to the same location as the engine.
+Alternatively, find the executables under "Releases". You will have to copy the two provided [dll files](https://github.com/Jakob256/PurplePanda/tree/main/dll%20files) also to the same location as the engine.
 
 ## Versions
 
 | Version |    Date     | Score against <p> previous version | [CCRL](https://computerchess.org.uk/ccrl/404/) rating | Changes |
 |:-------:|:-----------:|:---------------:|:-----:|:---     |
-|  19     | 28 Dec 2024 | 64% (+100 Elo)  |       |- moveordering refactored and considers "defended by a pawn" for own pieces<br> - if depth2go>=4 and no hashmove is available, a shallow search is used to find the most promising move <br> - beta-pruning at depth2go=1,2,3 with margins 0cp, 250cp and 500cp <br> - 4 captures extend the search by 2 ply <br> - repetition detection: if a position occures twice in the search tree, it is evaluated as drawn|
+|  20     | 15 Dec 2025 | 70% (+147 Elo)  |       |- less aggressive PST<br> - killer moves <br> - late move pruning for moves that never exceeded alpha <br> - optional opening book (default=false)<br> - repeated late moves (that aren't checks) reduce the search depth (+ potential re-search)<br> - moveordering refactored and defends attacked pieces <br> - history heuristic for moveordering <br> - checks always extend the search by one ply <br> - removal of mobility bonus <br> - removal of shallow search to find promising moves, when no hashmove is available|
+|  19     | 28 Dec 2024 | 64% (+100 Elo)  | 1780  |- moveordering refactored and considers "defended by a pawn" for own pieces<br> - if depth2go>=4 and no hashmove is available, a shallow search is used to find the most promising move <br> - beta-pruning at depth2go=1,2,3 with margins 0cp, 250cp and 500cp <br> - 4 captures extend the search by 2 ply <br> - repetition detection: if a position occures twice in the search tree, it is evaluated as drawn|
 |  18     | 26 Sep 2024 | 61% (+78 Elo)   | 1695  |- removal of random variation to the static evaluation <br> - Null Move Pruning with R=2 in (very) likely fail-high nodes<br> - moveordering incorporats defended squares <br> - late quiet moves at depth2go=2 are reduced in likely fail-low nodes |
 |  17     | 20 Jun 2024 | 60% (+70 Elo)   | 1646  |- move representation changed to a single 32-bit number <br> - quiescence search increased from usually 2 ply to always 4 ply <br> - moveordering additionally uses PST <br> - quiet moves to leaf nodes have to be the top ranked move after moveordering <br> - middlegame PST is updated before the search to reflect mobility for rooks and bishops |
 |  16     | 12 Apr 2024 | 56% (+42 Elo)   | 1595  |- tempo bonus |

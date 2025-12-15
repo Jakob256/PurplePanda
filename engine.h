@@ -8,6 +8,7 @@
 #include "oracle.h"
 #include "setBonusOfKey.h"
 #include "assignMoveListAndSort.h"
+#include "randomOpening.h"
 
 
 /************
@@ -22,7 +23,7 @@
 ***************/
 
 
-void engine (int board[8][8],unsigned long long int key, int time, int inputDepth){
+void engine(int board[8][8],unsigned long long int key, int time, int inputDepth, int nodeLimit){
 	/********************************************
 	**** tracking time and setting variables ****
 	********************************************/
@@ -31,8 +32,9 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	int nrPieces=((key>>9)&63);
 	int startTime=clock();
 	time=time*CLOCKS_PER_SEC/1000;
-	int endTime=startTime+time;
-
+	endTime=startTime+time;
+	NODELIMIT=nodeLimit;
+	
 	/*************************************
 	***** resetting counting numbers *****
 	*************************************/
@@ -42,6 +44,13 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	movegen=0;
 	hashstored=0;
 	hashhits=0;
+	for (int i=0;i<100;i++){killerMoves[i]=0;}
+	for (int i=0;i<8192;i++){moveHistoryScore[i]=0;}
+	for (int i=0;i<4096;i++){
+		historyA[i]=0;
+		historyB[i]=0;
+		historyC[i]=0;
+	}
 	
 	/*****************************
 	***** consult the oracle *****
@@ -54,6 +63,13 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	***** prepare/tablebase stuff/abort *****
 	****************************************/
 	
+	
+	if (UCI_OPTION_OPENINGBOOK){
+		if (randomOpening(board,key)){return;}
+	}
+	
+	
+	
 	// prepare default move:
 	unsigned int moveList[250];
 	assignMoveListAndSort(board,key,moveList,true);
@@ -62,7 +78,7 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	
 	// in case of only one legal move:
 	if (moveList[0]==1){
-		cout << "bestmove "; printMove(rootBestMove); cout << "\n";
+		cout << "bestmove " << move2string(rootBestMove) << "\n";
 		return;
 	} 
 	
@@ -85,38 +101,33 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 			}
 		}
 		
-		cout << "bestmove "; printMove(rootBestMove); cout << "\n";
+		cout << "bestmove " << move2string(rootBestMove) << "\n";
 		return;
 	}
 	
 	
-	// if we have rook vs rook, we can reduce the search depth
-	int pieceSum=0;
-	int pieceProd=1;
-	for (int col=0;col<8;col++){
-		for (int row=0;row<8;row++){
-			if (board[col][row]!=0){
-				pieceProd*=board[col][row];
-				pieceSum+=board[col][row];
-			}
-		}
-	}
-	if (nrPieces==4 && pieceProd==144 && pieceSum==0){inputDepth=8;}
+	// if we have queen vs queen, rook vs rook or minor vs minor, we can reduce the search depth
+	int phase24=int((key>>23)&63);
+	int naiveEval=int((key>>15)&255)-128;
+	if (nrPieces==4 && naiveEval==0 && phase24>0){inputDepth=8;}
 	
 	
 	/*********************************
 	***** start extensive search *****
 	*********************************/
 	
-	int maxDepth,evaluation;
+	int maxDepth,evaluation,hash4moveOrder,tempBoard[8][8],moveShort;
 	exitSearch=false;
+	long long int hash,hashOfTable;
+	unsigned long long int tempKey;
+	unsigned int move;
 	
-	for (int depth2go=2; depth2go<=20; depth2go++){	
+	for (int depth2go=2; depth2go<=30; depth2go++){	
 		if (exitSearch){break;}
 		if (depth2go>inputDepth){break;}
 		
 		maxDepth=depth2go+4;
-		evaluation=eval(board,key,hashFunction(board,key),0,depth2go,-INF,+INF,endTime,maxDepth,0);
+		evaluation=eval(board,key,hashFunction(board,key),0,depth2go,-INF,+INF,maxDepth,0,0,0);
 		
 		if (exitSearch){break;}
 		
@@ -127,8 +138,49 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 		" time "<<(clock()- startTime)*1000/CLOCKS_PER_SEC <<
 		" hashhits "<<hashhits<<
 		" hashstored "<<hashstored<<
-		" pv "; 
-		printMove(rootBestMove);
+		" pv "<<move2string(rootBestMove);
+		
+		/*************************************************************/
+		/** is there a longer principal variation in the hashtable? **/
+		
+		// 1. make backup
+		for (int i=0; i<64; i++){tempBoard[i/8][i%8]=board[i/8][i%8];}
+		tempKey=key;
+		
+		
+		// 2. iterate over PV
+		key=newKey(board,key,rootBestMove);
+		assignMakeMove(board,rootBestMove);
+		
+		for (int i=1; i<depth2go; i++){
+			hash=hashFunction(board,key);
+			hash4moveOrder=int(abs(hash%ht_size));
+			hashOfTable=ht_hash[hash4moveOrder];
+			
+			if (hashOfTable==hash){// we have the exact same hash stored!
+				moveShort=ht_moveShort[hash4moveOrder];	
+			} else {
+				moveShort=0;
+			}
+			
+			assignMoveListAndSort(board,key,moveList,true,moveShort);
+			if (moveList[1]%65536==moveShort){ // this is indeed a legal move
+				move=moveList[1];
+				cout << " "<<move2string(move);
+				key=newKey(board,key,move);
+				assignMakeMove(board,move);
+			} else {
+				break;
+			}
+		}
+		
+		// 3. restore the backup
+		for (int i=0; i<64; i++){board[i/8][i%8]=tempBoard[i/8][i%8];}
+		key=tempKey;
+		
+		/** end of PV stuff **/
+		/*********************/
+		
 		cout << std::endl;
 		
 		if (abs(evaluation)==100000){break;} // break immediately if there is a mate evaluation
@@ -143,7 +195,7 @@ void engine (int board[8][8],unsigned long long int key, int time, int inputDept
 	cout << "\nnodes: "<<nodes<< "\n"; 
 	cout << "staticeval: "<<staticeval<< "\n";
 	cout << "movegen: "<<movegen<< "\n";
-	cout << "bestmove "; printMove(rootBestMove); cout << "\n";
+	cout << "bestmove "<< move2string(rootBestMove) << "\n";
 }	
 
 #endif

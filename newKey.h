@@ -66,7 +66,7 @@ unsigned long long int newKey (int board[8][8],unsigned long long int key, unsig
 	*****************************/
 	
 	
-	if (abs(board[c1][r1])+abs(board[c2][r2])==1 && abs(r1-r2)==2){ // last move was a pawn double push 
+	if (abs(board[c1][r1])==1 && abs(r1-r2)==2){ // last move was a pawn double push 
 		newKeyy=newKeyy|32; // set the flag bit
 		newKeyy=newKeyy&(newKeyy^(64+128+256)); // set the column bits to 0
 		newKeyy=newKeyy|(c1<<6); // set the column bits to the right column

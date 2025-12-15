@@ -15,22 +15,41 @@
 *** Let's go ***
 ***************/
 
-unsigned int rootBestMove,evalBestMove;
+//UCI stuff:
+
+bool UCI_OPTION_OPENINGBOOK=false;
+bool openingBookRandomnessGenerated=false;
+short int openingBookRandomNumbers[2346];
+
+/*******************************
+*** general global variables ***
+*******************************/
+
+
 const int INF=100000000;
 bool exitSearch;
+int endTime,NODELIMIT;
 
-/******************************
-*** for evaluation / oracle ***
-******************************/
-
-long long int PST_mg[6+1+6][8][8]={0};  // long long necessary to add it to newKeyy
-long long int PST_eg[6+1+6][8][8]={0};  // long long necessary to add it to newKeyy
-int PST_average[6+1+6][8][8]={0};  // only used for moveordering
+long long int PST_mg[6+1+6][8][8]={0};      // long long necessary to add it to newKeyy
+long long int PST_eg[6+1+6][8][8]={0};      // long long necessary to add it to newKeyy
+int PST_mg_vector[832],PST_eg_vector[832];  // currently only for moveordering
 
 
-/***********************
-** for counting calls **
-***********************/
+/******************
+*** about moves ***
+******************/
+
+unsigned int rootBestMove;
+unsigned int killerMoves[100];
+int historyA[4096]; // how often a quiet move was tried
+int historyB[4096]; // how often it was successful
+int historyC[4096]; // how often it was tried since last pruning
+int moveHistoryScore[8192];
+
+
+/********************
+** counting things **
+********************/
 
 int nodes,staticeval,movegen,hashstored,hashhits;
 

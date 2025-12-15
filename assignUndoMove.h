@@ -25,35 +25,25 @@ void assignUndoMove (int board[8][8],unsigned int move){
 	bool enPassant =(move>>18)&0b1;
 	
 	int piece=board[c2][r2];
-
   	int turn=piece/abs(piece);
 	
+	board[c1][r1]=piece;
+	board[c2][r2]=-turn*absCaptured;
+	
 	if (enPassant){
-		board[c1][r1]=piece;
 		board[c2][r2]=0;
 		board[c2][r1]=-piece;
 		return;
 	}
   
   
-	//castling
-	if ((c1==4)&(c2==2)&(piece==6)){//white Queen-side
-		board[0][0]=2;board[1][0]=0;board[2][0]=0;board[3][0]=0;board[4][0]=6;return;
-	}
-	if ((c1==4)&(c2==6)&(piece==6)){//white King-side
-		board[4][0]=6;board[5][0]=0;board[6][0]=0;board[7][0]=2;return;
-	}
-	if ((c1==4)&(c2==2)&(piece==-6)){//black Queen-side
-		board[0][7]=-2;board[1][7]=0;board[2][7]=0;board[3][7]=0;board[4][7]=-6;return;
-	}
-	if ((c1==4)&(c2==6)&(piece==-6)){//black King-side
-		board[4][7]=-6;board[5][7]=0;board[6][7]=0;board[7][7]=-2;return;
-	}
+	//moving rooks when castling
+	if ((c1==4)&(c2==2)&(piece== 6)) {board[0][0]= 2;board[3][0]=0;return;}//white queen-side
+	if ((c1==4)&(c2==6)&(piece== 6)) {board[7][0]= 2;board[5][0]=0;return;}//white king-side
+	if ((c1==4)&(c2==2)&(piece==-6)) {board[0][7]=-2;board[3][7]=0;return;}//black queen-side
+	if ((c1==4)&(c2==6)&(piece==-6)) {board[7][7]=-2;board[5][7]=0;return;}//black king-side
 
-	if (absPromotedTo==0){  // no promotion
-		board[c1][r1]=piece;
-		board[c2][r2]=-turn*absCaptured;
-	} else {	// promotion
+	if (absPromotedTo!=0){  // promotion
 		board[c1][r1]=turn; // will be either 1 or -1
 		board[c2][r2]=-turn*absCaptured;		
 	}

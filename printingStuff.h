@@ -17,7 +17,7 @@
 
 // This file includes:
 // plotBoard
-// printMove
+// move2string
 // printMoveList
 // printKey
 // printFen
@@ -60,7 +60,7 @@ void plotBoard(int board[8][8]){
 
 
 
-void printMove(unsigned int move){
+string move2string(unsigned int move){
 	short int c1=move&0b111;
 	short int r1=(move>>3)&0b111;
 	short int c2=(move>>6)&0b111;
@@ -69,31 +69,19 @@ void printMove(unsigned int move){
 	//short int absCaptured=(move>>15)&0b111;
 	//bool enPassant =(move>>18)&0b1;
 	
-	
-	if (c1==0){cout <<"a";}
-	if (c1==1){cout <<"b";}
-	if (c1==2){cout <<"c";}
-	if (c1==3){cout <<"d";}
-	if (c1==4){cout <<"e";}
-	if (c1==5){cout <<"f";}
-	if (c1==6){cout <<"g";}
-	if (c1==7){cout <<"h";}
-	cout << r1+1;
-	if (c2==0){cout <<"a";}
-	if (c2==1){cout <<"b";}
-	if (c2==2){cout <<"c";}
-	if (c2==3){cout <<"d";}
-	if (c2==4){cout <<"e";}
-	if (c2==5){cout <<"f";}
-	if (c2==6){cout <<"g";}
-	if (c2==7){cout <<"h";}
-	cout << r2+1;
+	string moveString;
+	moveString+=char('a'+c1);
+	moveString+=to_string(r1+1);
+	moveString+=char('a'+c2);
+	moveString+=to_string(r2+1);
 	
 	// if promotion then print which promotion
-	if (absPromotedTo==2){cout << "r";}
-	if (absPromotedTo==3){cout << "n";}
-	if (absPromotedTo==4){cout << "b";}
-	if (absPromotedTo==5){cout << "q";}
+	if (absPromotedTo==2){moveString+="r";}
+	if (absPromotedTo==3){moveString+="n";}
+	if (absPromotedTo==4){moveString+="b";}
+	if (absPromotedTo==5){moveString+="q";}
+	
+	return moveString;
 }
 
 
@@ -101,17 +89,16 @@ void printMove(unsigned int move){
 void printMoveList (unsigned int moveList[]){
 	short int absCaptured;
 	for (int i=1; i<=moveList[0];i++){
-		cout << i << ": ";
-		printMove(moveList[i]);
-		absCaptured=(moveList[i]>>15)&0b111;
-		if (absCaptured==1){cout << " capturing a pawn";}
-		if (absCaptured==2){cout << " capturing a rook";}
-		if (absCaptured==3){cout << " capturing a knight";}
-		if (absCaptured==4){cout << " capturing a bishop";}
-		if (absCaptured==5){cout << " capturing a queen";}
-		if (absCaptured==6){cout << " capturing a king";}
+		unsigned int move=moveList[i];
+		absCaptured=(move>>15)&0b111;
 		
-		cout<< "\n";
+		if (absCaptured==0){cout << i << ": "<<move2string(move)<<"\n";}
+		if (absCaptured==1){cout << i << ": "<<move2string(move)<<" capturing a pawn\n";}
+		if (absCaptured==2){cout << i << ": "<<move2string(move)<<" capturing a rook\n";}
+		if (absCaptured==3){cout << i << ": "<<move2string(move)<<" capturing a knight\n";}
+		if (absCaptured==4){cout << i << ": "<<move2string(move)<<" capturing a bishop\n";}
+		if (absCaptured==5){cout << i << ": "<<move2string(move)<<" capturing a queen\n";}
+		if (absCaptured==6){cout << i << ": "<<move2string(move)<<" capturing a king\n";}
 	}
 }
 

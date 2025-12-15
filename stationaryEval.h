@@ -35,7 +35,7 @@ int stationaryEval(int board[8][8],unsigned long long int key){
 	******************/
 	
 	if (nrPieces<=3){
-		if (abs(eval)==3){return 0.;}  // lone bishop or knight can't checkmate
+		if (abs(eval)==3){return 0;}  // lone bishop or knight can't checkmate
 		
 		tb_result=TABLEBASE_3men[board2Hash3men(board,turn)];
 		if (tb_result==0){return 0;}
@@ -44,7 +44,7 @@ int stationaryEval(int board[8][8],unsigned long long int key){
 	}
 	
 	
-	return 100*eval+(PST_mg_score*phase24+PST_eg_score*(24-phase24))/24+turn*30;
+	return 100*eval+(PST_mg_score*phase24+PST_eg_score*(24-phase24))/24+turn*15;
 	
 	
 }
